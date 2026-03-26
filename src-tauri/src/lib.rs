@@ -75,7 +75,38 @@ pub fn run() {
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
+            // Set up tray icon click to toggle popover window
+            let app_handle = app.handle().clone();
+            app.on_tray_icon_event(move |_tray, event| {
+                use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
+                use tauri_plugin_positioner::{Position, WindowExt};
+
+                if let TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                } = event
+                {
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        if window.is_visible().unwrap_or(false) {
+                            let _ = window.hide();
+                        } else {
+                            let _ = window.move_window(Position::TrayCenter);
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                }
+            });
+
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Focused(false) = event {
+                if window.label() == "main" {
+                    let _ = window.hide();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_state,
