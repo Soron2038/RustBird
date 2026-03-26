@@ -1,11 +1,16 @@
 <script lang="ts">
   import type { Sound } from '$lib/types';
 
-  let { sounds, masterVolume, onVolumeChange, onMasterVolumeChange }: {
+  let {
+    sounds,
+    masterVolume,
+    onVolumeChange,
+    onMasterVolumeChange,
+  }: {
     sounds: Sound[];
     masterVolume: number;
-    onVolumeChange: (id: string, volume: number) => void;
-    onMasterVolumeChange: (volume: number) => void;
+    onVolumeChange: (id: string, volume: number) => Promise<void>;
+    onMasterVolumeChange: (volume: number) => Promise<void>;
   } = $props();
 </script>
 
@@ -26,7 +31,8 @@
             max="100"
             value={Math.round(sound.volume * 100)}
             class="vertical-slider"
-            oninput={(e) => onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
+            oninput={(e) =>
+              onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
           />
         </div>
       </div>
@@ -40,7 +46,7 @@
       min="0"
       max="100"
       value={Math.round(masterVolume * 100)}
-      class="master-slider"
+      class="slider-track master-slider"
       oninput={(e) => onMasterVolumeChange(parseInt((e.target as HTMLInputElement).value) / 100)}
     />
     <span class="master-icon">🔊</span>
@@ -119,21 +125,5 @@
   }
   .master-slider {
     width: 120px;
-    height: 2px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--fader-track);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  .master-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--fader-fill);
-    cursor: pointer;
   }
 </style>

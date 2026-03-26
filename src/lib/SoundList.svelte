@@ -1,28 +1,34 @@
 <script lang="ts">
-  import { invoke } from '@tauri-apps/api/core';
   import { open } from '@tauri-apps/plugin-dialog';
+  import { importSound, setDialogOpen, setDialogClosed } from '$lib/commands';
   import type { Sound } from '$lib/types';
 
-  let { sounds, hasActiveSounds, onToggle, onImport, onRemove }: {
+  let {
+    sounds,
+    hasActiveSounds,
+    onToggle,
+    onImport,
+    onRemove,
+  }: {
     sounds: Sound[];
     hasActiveSounds: boolean;
-    onToggle: (id: string) => void;
-    onImport: () => void;
-    onRemove: (id: string) => void;
+    onToggle: (id: string) => Promise<void>;
+    onImport: () => Promise<void>;
+    onRemove: (id: string) => Promise<void>;
   } = $props();
 
   async function handleImport() {
-    await invoke('set_dialog_open');
+    await setDialogOpen();
     try {
       const path = await open({
         filters: [{ name: 'Audio', extensions: ['mp3', 'wav'] }],
       });
       if (path) {
-        await invoke('import_sound', { path });
-        onImport();
+        await importSound(path as string);
+        await onImport();
       }
     } finally {
-      await invoke('set_dialog_closed');
+      await setDialogClosed();
     }
   }
 </script>
@@ -41,10 +47,18 @@
             class="remove-btn"
             role="button"
             tabindex="0"
-            onclick={(e) => { e.stopPropagation(); onRemove(sound.id); }}
-            onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onRemove(sound.id); } }}
-            title="Remove"
-          >×</span>
+            onclick={(e) => {
+              e.stopPropagation();
+              onRemove(sound.id);
+            }}
+            onkeydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                onRemove(sound.id);
+              }
+            }}
+            title="Remove">×</span
+          >
         {/if}
         <span class="dot" class:active={sound.is_active}>
           {sound.is_active ? '●' : '○'}
@@ -53,9 +67,7 @@
     {/each}
   </div>
 
-  <button class="import-btn" onclick={handleImport}>
-    ＋ Add Sound
-  </button>
+  <button class="import-btn" onclick={handleImport}> ＋ Add Sound </button>
 </section>
 
 <style>

@@ -1,3 +1,4 @@
+use crate::error::AppError;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -86,34 +87,33 @@ impl AppState {
     }
 }
 
-pub fn app_data_dir() -> PathBuf {
-    let home = dirs::home_dir().expect("Could not find home directory");
-    home.join("Library")
+pub fn app_data_dir() -> Result<PathBuf, AppError> {
+    let home = dirs::home_dir().ok_or(AppError::HomeDirNotFound)?;
+    Ok(home
+        .join("Library")
         .join("Application Support")
-        .join("RustBird")
+        .join("RustBird"))
 }
 
-pub fn config_path() -> PathBuf {
-    app_data_dir().join("config.json")
+pub fn config_path() -> Result<PathBuf, AppError> {
+    Ok(app_data_dir()?.join("config.json"))
 }
 
-pub fn user_sounds_dir() -> PathBuf {
-    app_data_dir().join("sounds")
+pub fn user_sounds_dir() -> Result<PathBuf, AppError> {
+    Ok(app_data_dir()?.join("sounds"))
 }
 
-pub fn save_state(state: &AppState) -> Result<(), String> {
-    let dir = app_data_dir();
-    fs::create_dir_all(&dir).map_err(|e| format!("Failed to create app data dir: {}", e))?;
-
+pub fn save_state(state: &AppState) -> Result<(), AppError> {
+    let dir = app_data_dir()?;
+    fs::create_dir_all(&dir)?;
     let persisted = state.to_persisted();
-    let json =
-        serde_json::to_string_pretty(&persisted).map_err(|e| format!("Serialize error: {}", e))?;
-    fs::write(config_path(), json).map_err(|e| format!("Write error: {}", e))?;
+    let json = serde_json::to_string_pretty(&persisted)?;
+    fs::write(config_path()?, json)?;
     Ok(())
 }
 
 pub fn load_persisted_state() -> Option<PersistedState> {
-    let path = config_path();
+    let path = config_path().ok()?;
     if !path.exists() {
         return None;
     }
@@ -121,64 +121,237 @@ pub fn load_persisted_state() -> Option<PersistedState> {
     serde_json::from_str(&data).ok()
 }
 
-pub fn discover_bundled_sounds(sounds_dir: &Path) -> Vec<Sound> {
-    let mut sounds = Vec::new();
-    if let Ok(entries) = fs::read_dir(sounds_dir) {
-        for entry in entries.flatten() {
+fn discover_sounds(dir: &Path, is_bundled: bool, id_prefix: &str) -> Vec<Sound> {
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return Vec::new(),
+    };
+    let mut sounds: Vec<Sound> = entries
+        .flatten()
+        .filter_map(|entry| {
             let path = entry.path();
-            if let Some(ext) = path.extension() {
-                if ext == "mp3" || ext == "wav" {
-                    let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-                    let name = capitalize_first(&stem);
-                    sounds.push(Sound {
-                        id: stem,
-                        name,
-                        file_path: path,
-                        is_bundled: true,
-                        is_active: false,
-                        volume: 0.7,
-                    });
-                }
+            let ext = path.extension()?;
+            if ext != "mp3" && ext != "wav" {
+                return None;
             }
-        }
-    }
+            let stem = path.file_stem()?.to_string_lossy().to_string();
+            let name = capitalize_first(&stem);
+            let id = if id_prefix.is_empty() {
+                stem
+            } else {
+                format!("{}{}", id_prefix, stem)
+            };
+            Some(Sound {
+                id,
+                name,
+                file_path: path,
+                is_bundled,
+                is_active: false,
+                volume: 0.7,
+            })
+        })
+        .collect();
     sounds.sort_by(|a, b| a.name.cmp(&b.name));
     sounds
+}
+
+pub fn discover_bundled_sounds(sounds_dir: &Path) -> Vec<Sound> {
+    discover_sounds(sounds_dir, true, "")
 }
 
 pub fn discover_user_sounds() -> Vec<Sound> {
-    let dir = user_sounds_dir();
+    let dir = match user_sounds_dir() {
+        Ok(d) => d,
+        Err(_) => return Vec::new(),
+    };
     if !dir.exists() {
         return Vec::new();
     }
-    let mut sounds = Vec::new();
-    if let Ok(entries) = fs::read_dir(&dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if let Some(ext) = path.extension() {
-                if ext == "mp3" || ext == "wav" {
-                    let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-                    let name = capitalize_first(&stem);
-                    sounds.push(Sound {
-                        id: format!("user_{}", stem),
-                        name,
-                        file_path: path,
-                        is_bundled: false,
-                        is_active: false,
-                        volume: 0.7,
-                    });
-                }
-            }
-        }
-    }
-    sounds.sort_by(|a, b| a.name.cmp(&b.name));
-    sounds
+    discover_sounds(&dir, false, "user_")
 }
 
-fn capitalize_first(s: &str) -> String {
+pub(crate) fn capitalize_first(s: &str) -> String {
     let mut chars = s.chars();
     match chars.next() {
         None => String::new(),
         Some(c) => c.to_uppercase().to_string() + chars.as_str(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::{self, File};
+    use std::path::PathBuf;
+
+    /// Helper: build a Sound with the given id, is_active, and volume.
+    fn make_sound(id: &str, active: bool, volume: f32) -> Sound {
+        Sound {
+            id: id.to_string(),
+            name: capitalize_first(id),
+            file_path: PathBuf::from(format!("/fake/{id}.mp3")),
+            is_bundled: true,
+            is_active: active,
+            volume,
+        }
+    }
+
+    /// Helper: create a unique temp directory for a test.
+    fn test_tmp_dir(test_name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join("rustbird_tests").join(test_name);
+        let _ = fs::remove_dir_all(&dir); // clean previous runs
+        fs::create_dir_all(&dir).expect("create temp dir");
+        dir
+    }
+
+    // ── to_persisted / apply_persisted round-trip ────────────────────
+
+    #[test]
+    fn persisted_state_roundtrip() {
+        let state = AppState {
+            sounds: vec![
+                make_sound("rain", true, 0.9),
+                make_sound("wind", false, 0.3),
+            ],
+            master_volume: 0.65,
+            is_paused: true,
+            crossfade_duration: 3.5,
+            autostart_enabled: false,
+            dialog_open: false,
+        };
+
+        // Round-trip through JSON
+        let persisted = state.to_persisted();
+        let json = serde_json::to_string(&persisted).expect("serialize");
+        let restored: PersistedState = serde_json::from_str(&json).expect("deserialize");
+
+        // Apply to a fresh AppState that already knows the same sound IDs
+        let mut new_state = AppState {
+            sounds: vec![
+                make_sound("rain", false, 0.7),
+                make_sound("wind", false, 0.7),
+            ],
+            ..AppState::default()
+        };
+        new_state.apply_persisted(&restored);
+
+        assert_eq!(new_state.master_volume, state.master_volume);
+        assert_eq!(new_state.is_paused, state.is_paused);
+        assert_eq!(new_state.crossfade_duration, state.crossfade_duration);
+        assert_eq!(new_state.autostart_enabled, state.autostart_enabled);
+
+        let rain = new_state.sounds.iter().find(|s| s.id == "rain").unwrap();
+        assert!(rain.is_active);
+        assert!((rain.volume - 0.9).abs() < f32::EPSILON);
+
+        let wind = new_state.sounds.iter().find(|s| s.id == "wind").unwrap();
+        assert!(!wind.is_active);
+        assert!((wind.volume - 0.3).abs() < f32::EPSILON);
+    }
+
+    // ── apply_persisted with unknown IDs ─────────────────────────────
+
+    #[test]
+    fn apply_persisted_unknown_ids() {
+        let mut state = AppState {
+            sounds: vec![make_sound("rain", false, 0.7)],
+            ..AppState::default()
+        };
+
+        let persisted = PersistedState {
+            sound_states: vec![
+                PersistedSoundState {
+                    id: "nonexistent_1".to_string(),
+                    is_active: true,
+                    volume: 1.0,
+                },
+                PersistedSoundState {
+                    id: "nonexistent_2".to_string(),
+                    is_active: true,
+                    volume: 0.5,
+                },
+            ],
+            master_volume: 0.5,
+            is_paused: true,
+            crossfade_duration: 1.0,
+            autostart_enabled: false,
+        };
+
+        // Must not panic
+        state.apply_persisted(&persisted);
+
+        // Scalar fields are still applied
+        assert_eq!(state.master_volume, 0.5);
+        assert!(state.is_paused);
+
+        // Existing sound is unchanged because persisted had no matching ID
+        let rain = state.sounds.iter().find(|s| s.id == "rain").unwrap();
+        assert!(!rain.is_active);
+        assert!((rain.volume - 0.7).abs() < f32::EPSILON);
+    }
+
+    // ── discover_bundled_sounds: extension filtering ─────────────────
+
+    #[test]
+    fn discover_sounds_filters_extensions() {
+        let dir = test_tmp_dir("discover_sounds_filters_extensions");
+        for name in &[
+            "bird.mp3",
+            "wave.wav",
+            "notes.txt",
+            "photo.png",
+            "song.flac",
+        ] {
+            File::create(dir.join(name)).expect("create file");
+        }
+
+        let sounds = discover_bundled_sounds(&dir);
+        let names: Vec<&str> = sounds.iter().map(|s| s.name.as_str()).collect();
+
+        assert_eq!(sounds.len(), 2);
+        assert!(names.contains(&"Bird"));
+        assert!(names.contains(&"Wave"));
+    }
+
+    // ── discover_bundled_sounds: empty directory ─────────────────────
+
+    #[test]
+    fn discover_sounds_empty_dir() {
+        let dir = test_tmp_dir("discover_sounds_empty_dir");
+        let sounds = discover_bundled_sounds(&dir);
+        assert!(sounds.is_empty());
+    }
+
+    // ── discover_bundled_sounds: alphabetical sort ───────────────────
+
+    #[test]
+    fn discover_sounds_sorts_alphabetically() {
+        let dir = test_tmp_dir("discover_sounds_sorts_alphabetically");
+        // Create files whose stems sort differently than creation order
+        for name in &["zebra.mp3", "alpha.wav", "middle.mp3"] {
+            File::create(dir.join(name)).expect("create file");
+        }
+
+        let sounds = discover_bundled_sounds(&dir);
+        let names: Vec<&str> = sounds.iter().map(|s| s.name.as_str()).collect();
+
+        assert_eq!(names, vec!["Alpha", "Middle", "Zebra"]);
+    }
+
+    // ── capitalize_first ─────────────────────────────────────────────
+
+    #[test]
+    fn capitalize_first_empty() {
+        assert_eq!(capitalize_first(""), "");
+    }
+
+    #[test]
+    fn capitalize_first_single_char() {
+        assert_eq!(capitalize_first("a"), "A");
+    }
+
+    #[test]
+    fn capitalize_first_unicode() {
+        assert_eq!(capitalize_first("über"), "Über");
     }
 }

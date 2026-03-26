@@ -6,6 +6,11 @@ import adapter from "@sveltejs/adapter-static";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
+  compilerOptions: {
+    compatibility: {
+      componentApi: 4,
+    },
+  },
   kit: {
     adapter: adapter({
       fallback: "index.html",

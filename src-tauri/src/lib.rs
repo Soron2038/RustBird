@@ -1,10 +1,11 @@
 mod audio;
 mod commands;
 mod crossfade;
+mod error;
 mod state;
 
 use audio::AudioEngine;
-use commands::{AudioEngineMutex, AppStateMutex};
+use commands::{AppStateMutex, AudioEngineMutex};
 use state::{discover_bundled_sounds, discover_user_sounds, load_persisted_state, AppState};
 use std::sync::Mutex;
 use tauri::Manager;
@@ -12,6 +13,8 @@ use tauri_plugin_autostart::ManagerExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    env_logger::init();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_positioner::init())
         .plugin(tauri_plugin_dialog::init())
@@ -31,7 +34,6 @@ pub fn run() {
             // In development: fall back to the project's assets/sounds/ directory
             let mut found_bundled = false;
             if let Ok(resource_dir) = app.path().resource_dir() {
-                // Try several possible resource paths
                 for subpath in &["sounds", "assets/sounds"] {
                     let dir = resource_dir.join(subpath);
                     let bundled = discover_bundled_sounds(&dir);
@@ -69,11 +71,7 @@ pub fn run() {
             }
 
             // Initialize audio engine
-            let mut audio_engine = AudioEngine::new().map_err(|e| {
-                eprintln!("Failed to initialize audio engine: {}", e);
-                Box::new(std::io::Error::new(std::io::ErrorKind::Other, e))
-                    as Box<dyn std::error::Error>
-            })?;
+            let mut audio_engine = AudioEngine::new()?;
 
             // Set initial master volume
             audio_engine.set_master_volume(app_state.master_volume);
@@ -83,10 +81,13 @@ pub fn run() {
                 let crossfade = app_state.crossfade_duration;
                 for sound in &app_state.sounds {
                     if sound.is_active {
-                        if let Err(e) =
-                            audio_engine.play_sound(&sound.id, &sound.file_path, sound.volume, crossfade)
-                        {
-                            eprintln!("Failed to resume sound {}: {}", sound.id, e);
+                        if let Err(e) = audio_engine.play_sound(
+                            &sound.id,
+                            &sound.file_path,
+                            sound.volume,
+                            crossfade,
+                        ) {
+                            log::error!("Failed to resume sound {}: {}", sound.id, e);
                         }
                     }
                 }
@@ -102,8 +103,8 @@ pub fn run() {
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
             // Set up tray menu (right-click only) and popover (left-click)
-            let quit_item = tauri::menu::MenuItemBuilder::with_id("quit", "Quit RustBird")
-                .build(app)?;
+            let quit_item =
+                tauri::menu::MenuItemBuilder::with_id("quit", "Quit RustBird").build(app)?;
             let tray_menu = tauri::menu::MenuBuilder::new(app)
                 .item(&quit_item)
                 .build()?;
@@ -133,7 +134,9 @@ pub fn run() {
                             let tray_pos = rect.position.to_logical::<f64>(1.0);
                             let tray_size = rect.size.to_logical::<f64>(1.0);
                             let scale = window.scale_factor().unwrap_or(1.0);
-                            let win_size = window.outer_size().unwrap_or_default()
+                            let win_size = window
+                                .outer_size()
+                                .unwrap_or_default()
                                 .to_logical::<f64>(scale);
                             let x = tray_pos.x - (win_size.width / 2.0) + (tray_size.width / 2.0);
                             let y = tray_pos.y + tray_size.height;
@@ -151,7 +154,7 @@ pub fn run() {
             if event.id().as_ref() == "quit" {
                 // Save state before quitting
                 if let Some(state) = app.try_state::<AppStateMutex>() {
-                    let app_state = state.0.lock().unwrap();
+                    let app_state = state.0.lock().unwrap_or_else(|e| e.into_inner());
                     let _ = crate::state::save_state(&app_state);
                 }
                 app.exit(0);
@@ -162,7 +165,13 @@ pub fn run() {
                 if window.label() == "main" {
                     let should_hide = window
                         .try_state::<AppStateMutex>()
-                        .map(|state| !state.0.lock().unwrap().dialog_open)
+                        .map(|state| {
+                            !state
+                                .0
+                                .lock()
+                                .unwrap_or_else(|e| e.into_inner())
+                                .dialog_open
+                        })
                         .unwrap_or(true);
                     if should_hide {
                         let _ = window.hide();
@@ -172,7 +181,7 @@ pub fn run() {
             if let tauri::WindowEvent::Destroyed = event {
                 if window.label() == "main" {
                     if let Some(state) = window.try_state::<AppStateMutex>() {
-                        let app_state = state.0.lock().unwrap();
+                        let app_state = state.0.lock().unwrap_or_else(|e| e.into_inner());
                         let _ = crate::state::save_state(&app_state);
                     }
                 }

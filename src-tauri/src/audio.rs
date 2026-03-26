@@ -1,4 +1,5 @@
 use crate::crossfade::StreamingCrossfadeLoop;
+use crate::error::AppError;
 use rodio::{OutputStream, OutputStreamHandle, Sink, Source};
 use std::collections::HashMap;
 use std::path::Path;
@@ -13,9 +14,9 @@ pub struct AudioEngine {
 }
 
 impl AudioEngine {
-    pub fn new() -> Result<Self, String> {
+    pub fn new() -> Result<Self, AppError> {
         let (_stream, stream_handle) =
-            OutputStream::try_default().map_err(|e| format!("Audio output error: {}", e))?;
+            OutputStream::try_default().map_err(|e| AppError::Audio(e.to_string()))?;
 
         Ok(Self {
             _stream,
@@ -32,15 +33,14 @@ impl AudioEngine {
         file_path: &Path,
         volume: f32,
         crossfade_secs: f32,
-    ) -> Result<(), String> {
+    ) -> Result<(), AppError> {
         self.stop_sound(id);
 
         let sink = Sink::try_new(&self.stream_handle)
-            .map_err(|e| format!("Failed to create sink: {}", e))?;
+            .map_err(|e| AppError::Audio(format!("Failed to create sink: {}", e)))?;
 
         let source = self.create_crossfade_source(file_path, crossfade_secs)?;
 
-        // Convert i16 → f32 for fade_in, then append
         let source = source
             .convert_samples::<f32>()
             .fade_in(Duration::from_secs(1));
@@ -58,8 +58,8 @@ impl AudioEngine {
         &self,
         file_path: &Path,
         crossfade_secs: f32,
-    ) -> Result<StreamingCrossfadeLoop, String> {
-        StreamingCrossfadeLoop::new(file_path, crossfade_secs)
+    ) -> Result<StreamingCrossfadeLoop, AppError> {
+        StreamingCrossfadeLoop::new(file_path, crossfade_secs).map_err(AppError::Audio)
     }
 
     pub fn stop_sound(&mut self, id: &str) {
@@ -95,5 +95,4 @@ impl AudioEngine {
             sink.play();
         }
     }
-
 }

@@ -37,8 +37,7 @@ impl StreamingCrossfadeLoop {
         let sample_rate = meta.sample_rate();
         drop(meta);
 
-        let crossfade_samples =
-            (sample_rate as f32 * crossfade_secs) as usize * channels as usize;
+        let crossfade_samples = (sample_rate as f32 * crossfade_secs) as usize * channels as usize;
 
         let decoder = open_decoder(path)?;
 
@@ -125,8 +124,7 @@ impl Iterator for StreamingCrossfadeLoop {
                 }
 
                 let progress = *cf_pos as f32 / self.crossfade_samples as f32;
-                let blended =
-                    (outgoing * (1.0 - progress) + in_sample as f32 * progress) as i16;
+                let blended = (outgoing * (1.0 - progress) + in_sample as f32 * progress) as i16;
                 *cf_pos += 1;
                 Some(blended)
             }
@@ -135,10 +133,18 @@ impl Iterator for StreamingCrossfadeLoop {
 }
 
 impl Source for StreamingCrossfadeLoop {
-    fn current_frame_len(&self) -> Option<usize> { None }
-    fn channels(&self) -> u16 { self.channels }
-    fn sample_rate(&self) -> u32 { self.sample_rate }
-    fn total_duration(&self) -> Option<Duration> { None }
+    fn current_frame_len(&self) -> Option<usize> {
+        None
+    }
+    fn channels(&self) -> u16 {
+        self.channels
+    }
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+    fn total_duration(&self) -> Option<Duration> {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -181,7 +187,11 @@ mod tests {
 
         let looper = StreamingCrossfadeLoop::new(&path, 0.02).unwrap();
         let output: Vec<i16> = looper.take(4410 * 3).collect();
-        assert_eq!(output.len(), 4410 * 3, "must produce 3x the file's sample count via looping");
+        assert_eq!(
+            output.len(),
+            4410 * 3,
+            "must produce 3x the file's sample count via looping"
+        );
 
         std::fs::remove_file(&path).ok();
     }

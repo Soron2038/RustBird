@@ -1,9 +1,14 @@
+// Lock ordering convention:
+// Always acquire AppStateMutex before AudioEngineMutex.
+// Never hold both locks simultaneously — drop one before acquiring the other.
+
 use crate::audio::AudioEngine;
-use crate::state::{save_state, user_sounds_dir, AppState, Sound};
+use crate::error::AppError;
+use crate::state::{capitalize_first, save_state, user_sounds_dir, AppState, Sound};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use uuid::Uuid;
 
 pub struct AppStateMutex(pub Mutex<AppState>);
@@ -16,8 +21,11 @@ unsafe impl Send for AudioEngineMutex {}
 unsafe impl Sync for AudioEngineMutex {}
 
 #[tauri::command]
-pub fn get_state(state: State<'_, AppStateMutex>) -> Result<AppState, String> {
-    let app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+pub fn get_state(state: State<'_, AppStateMutex>) -> Result<AppState, AppError> {
+    let app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
     Ok(app_state.clone())
 }
 
@@ -27,23 +35,23 @@ pub fn toggle_sound(
     app_handle: AppHandle,
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
-) -> Result<AppState, String> {
+) -> Result<AppState, AppError> {
     // Read info and update state immediately so the UI responds instantly
     let (was_active, file_path, volume, is_paused, crossfade) = {
-        let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-        // Read all values first (immutable borrows)
+        let mut app_state = state
+            .0
+            .lock()
+            .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
         let is_paused = app_state.is_paused;
         let crossfade = app_state.crossfade_duration;
         let sound = app_state
             .sounds
-            .iter()
+            .iter_mut()
             .find(|s| s.id == id)
-            .ok_or_else(|| format!("Sound not found: {}", id))?;
+            .ok_or_else(|| AppError::SoundNotFound(id.clone()))?;
         let was_active = sound.is_active;
         let file_path = sound.file_path.clone();
         let volume = sound.volume;
-        // Now mutate
-        let sound = app_state.sounds.iter_mut().find(|s| s.id == id).unwrap();
         sound.is_active = !was_active;
         let _ = save_state(&app_state);
         (was_active, file_path, volume, is_paused, crossfade)
@@ -51,29 +59,37 @@ pub fn toggle_sound(
 
     // Stop is fast — do it inline
     if was_active {
-        let mut audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+        let mut audio_engine = audio
+            .0
+            .lock()
+            .map_err(|_| AppError::Audio("Audio lock poisoned".into()))?;
         audio_engine.stop_sound(&id);
     } else if !is_paused {
         // Decode + play is slow — spawn on background thread so UI doesn't freeze
         let id_clone = id.clone();
         std::thread::spawn(move || {
             let audio_state = app_handle.state::<AudioEngineMutex>();
-            let mut audio_engine = audio_state.0.lock().unwrap();
+            let mut audio_engine = audio_state.0.lock().unwrap_or_else(|e| e.into_inner());
             if let Err(e) = audio_engine.play_sound(&id_clone, &file_path, volume, crossfade) {
-                eprintln!("Failed to play sound {}: {}", id_clone, e);
-                // Revert state on error
+                log::error!("Failed to play sound {}: {}", id_clone, e);
+                // Release audio lock before acquiring state lock (lock ordering)
+                drop(audio_engine);
                 let state = app_handle.state::<AppStateMutex>();
-                let mut app_state = state.0.lock().unwrap();
+                let mut app_state = state.0.lock().unwrap_or_else(|e| e.into_inner());
                 if let Some(sound) = app_state.sounds.iter_mut().find(|s| s.id == id_clone) {
                     sound.is_active = false;
                 }
                 let _ = save_state(&app_state);
+                let _ = app_handle.emit("sound-playback-failed", &id_clone);
             }
         });
     }
 
     // Return updated state immediately — audio loads in background
-    let app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
     Ok(app_state.clone())
 }
 
@@ -83,15 +99,21 @@ pub fn set_volume(
     volume: f32,
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
-) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-    let mut audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
+    let mut audio_engine = audio
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("Audio lock poisoned".into()))?;
 
     let sound = app_state
         .sounds
         .iter_mut()
         .find(|s| s.id == id)
-        .ok_or_else(|| format!("Sound not found: {}", id))?;
+        .ok_or_else(|| AppError::SoundNotFound(id.clone()))?;
 
     sound.volume = volume;
     audio_engine.set_volume(&id, volume);
@@ -105,9 +127,15 @@ pub fn set_master_volume(
     volume: f32,
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
-) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-    let mut audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
+    let mut audio_engine = audio
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("Audio lock poisoned".into()))?;
 
     app_state.master_volume = volume;
     audio_engine.set_master_volume(volume);
@@ -120,9 +148,15 @@ pub fn set_master_volume(
 pub fn pause_all(
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
-) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-    let audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
+    let audio_engine = audio
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("Audio lock poisoned".into()))?;
 
     app_state.is_paused = true;
     audio_engine.pause_all();
@@ -135,9 +169,15 @@ pub fn pause_all(
 pub fn resume_all(
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
-) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-    let audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
+    let audio_engine = audio
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("Audio lock poisoned".into()))?;
 
     app_state.is_paused = false;
     audio_engine.resume_all();
@@ -150,27 +190,27 @@ pub fn resume_all(
 pub fn import_sound(
     file_path: String,
     state: State<'_, AppStateMutex>,
-) -> Result<AppState, String> {
+) -> Result<AppState, AppError> {
     let src_path = PathBuf::from(&file_path);
 
     let ext = src_path
         .extension()
         .and_then(|e| e.to_str())
         .map(|e| e.to_lowercase())
-        .ok_or("File has no extension")?;
+        .ok_or(AppError::InvalidFilename)?;
 
     if ext != "mp3" && ext != "wav" {
-        return Err(format!("Unsupported file type: {}", ext));
+        return Err(AppError::UnsupportedFileType(ext));
     }
 
-    let dest_dir = user_sounds_dir();
-    fs::create_dir_all(&dest_dir).map_err(|e| format!("Failed to create sounds dir: {}", e))?;
+    let dest_dir = user_sounds_dir()?;
+    fs::create_dir_all(&dest_dir)?;
 
     // Determine destination filename, deduplicating with a UUID suffix if needed
     let stem = src_path
         .file_stem()
         .and_then(|s| s.to_str())
-        .ok_or("Invalid filename")?
+        .ok_or(AppError::InvalidFilename)?
         .to_string();
 
     let candidate = dest_dir.join(format!("{}.{}", stem, ext));
@@ -181,22 +221,15 @@ pub fn import_sound(
         candidate
     };
 
-    fs::copy(&src_path, &dest_path)
-        .map_err(|e| format!("Failed to copy file: {}", e))?;
+    fs::copy(&src_path, &dest_path)?;
 
     let final_stem = dest_path
         .file_stem()
-        .unwrap()
+        .ok_or(AppError::InvalidFilename)?
         .to_string_lossy()
         .to_string();
 
-    let name = {
-        let mut chars = final_stem.chars();
-        match chars.next() {
-            None => String::new(),
-            Some(c) => c.to_uppercase().to_string() + chars.as_str(),
-        }
-    };
+    let name = capitalize_first(&final_stem);
 
     let new_sound = Sound {
         id: format!("user_{}", final_stem),
@@ -207,7 +240,10 @@ pub fn import_sound(
         volume: 0.7,
     };
 
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
     app_state.sounds.push(new_sound);
     app_state.sounds.sort_by(|a, b| a.name.cmp(&b.name));
 
@@ -220,31 +256,36 @@ pub fn remove_sound(
     id: String,
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
-) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
 
     let sound = app_state
         .sounds
         .iter()
         .find(|s| s.id == id)
-        .ok_or_else(|| format!("Sound not found: {}", id))?;
+        .ok_or_else(|| AppError::SoundNotFound(id.clone()))?;
 
     if sound.is_bundled {
-        return Err("Cannot remove bundled sounds".to_string());
+        return Err(AppError::BundledSoundRemoval);
     }
 
     let file_path = sound.file_path.clone();
 
-    // Stop playback first
+    // Stop playback first (acquire audio lock, then release before continuing)
     {
-        let mut audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+        let mut audio_engine = audio
+            .0
+            .lock()
+            .map_err(|_| AppError::Audio("Audio lock poisoned".into()))?;
         audio_engine.stop_sound(&id);
     }
 
     // Remove the file from disk
     if file_path.exists() {
-        fs::remove_file(&file_path)
-            .map_err(|e| format!("Failed to delete sound file: {}", e))?;
+        fs::remove_file(&file_path)?;
     }
 
     app_state.sounds.retain(|s| s.id != id);
@@ -257,25 +298,32 @@ pub fn remove_sound(
 pub fn set_crossfade_duration(
     duration: f32,
     state: State<'_, AppStateMutex>,
-) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-
+) -> Result<(), AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
     app_state.crossfade_duration = duration;
-
     save_state(&app_state)?;
-    Ok(app_state.clone())
+    Ok(())
 }
 
 #[tauri::command]
-pub fn set_dialog_open(state: State<'_, AppStateMutex>) -> Result<(), String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+pub fn set_dialog_open(state: State<'_, AppStateMutex>) -> Result<(), AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
     app_state.dialog_open = true;
     Ok(())
 }
 
 #[tauri::command]
-pub fn set_dialog_closed(state: State<'_, AppStateMutex>) -> Result<(), String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+pub fn set_dialog_closed(state: State<'_, AppStateMutex>) -> Result<(), AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
     app_state.dialog_open = false;
     Ok(())
 }

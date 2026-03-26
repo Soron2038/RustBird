@@ -1,5 +1,15 @@
-<script>
-  let { isPaused, showSettings, onTogglePause, onToggleSettings } = $props();
+<script lang="ts">
+  let {
+    isPaused,
+    showSettings,
+    onTogglePause,
+    onToggleSettings,
+  }: {
+    isPaused: boolean;
+    showSettings: boolean;
+    onTogglePause: () => Promise<void>;
+    onToggleSettings: () => void;
+  } = $props();
 </script>
 
 <header>
@@ -8,9 +18,7 @@
     <button onclick={onTogglePause} title={isPaused ? 'Resume' : 'Pause'}>
       {isPaused ? '▶' : '⏸'}
     </button>
-    <button onclick={onToggleSettings} title="Settings" class:active={showSettings}>
-      ⚙
-    </button>
+    <button onclick={onToggleSettings} title="Settings" class:active={showSettings}> ⚙ </button>
   </div>
 </header>
 

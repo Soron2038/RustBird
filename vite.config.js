@@ -8,6 +8,16 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [sveltekit()],
 
+  // Svelte 5 needs browser export conditions for component testing with jsdom
+  // @ts-expect-error process is a nodejs global
+  resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,
+
+  test: {
+    environment: 'jsdom',
+    include: ['src/**/*.test.ts'],
+    setupFiles: ['src/test/setup.ts'],
+  },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

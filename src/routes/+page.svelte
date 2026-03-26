@@ -1,23 +1,42 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { invoke } from '@tauri-apps/api/core';
+  import { listen } from '@tauri-apps/api/event';
   import { onMount } from 'svelte';
   import type { AppState } from '$lib/types';
+  import {
+    getState,
+    toggleSound,
+    setVolume,
+    setMasterVolume,
+    pauseAll,
+    resumeAll,
+    removeSound,
+  } from '$lib/commands';
   import Header from '$lib/Header.svelte';
   import Mixer from '$lib/Mixer.svelte';
   import SoundList from '$lib/SoundList.svelte';
   import Settings from '$lib/Settings.svelte';
 
-  let state: AppState | null = $state(null);
+  let state = $state<AppState | null>(null);
   let showSettings = $state(false);
+  let hasActiveSounds = $derived(
+    state ? state.sounds.some((s: { is_active: boolean }) => s.is_active) : false,
+  );
+  let activeSounds = $derived(
+    state ? state.sounds.filter((s: { is_active: boolean }) => s.is_active) : [],
+  );
 
-  onMount(async () => {
-    state = await invoke('get_state');
+  onMount(() => {
+    getState().then((s) => (state = s));
+    const unlisten = listen('sound-playback-failed', () => refreshState());
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   });
 
   async function refreshState() {
-    state = await invoke('get_state');
+    state = await getState();
   }
 
   function toggleSettings() {
@@ -31,11 +50,10 @@
     {showSettings}
     onTogglePause={async () => {
       if (state!.is_paused) {
-        await invoke('resume_all');
+        state = await resumeAll();
       } else {
-        await invoke('pause_all');
+        state = await pauseAll();
       }
-      await refreshState();
     }}
     onToggleSettings={toggleSettings}
   />
@@ -44,34 +62,31 @@
     <Settings
       autostartEnabled={state.autostart_enabled}
       crossfadeDuration={state.crossfade_duration}
-      onBack={() => showSettings = false}
+      onBack={() => (showSettings = false)}
     />
   {:else}
-    {#if state.sounds.some(s => s.is_active)}
+    {#if hasActiveSounds}
       <Mixer
-        sounds={state.sounds.filter(s => s.is_active)}
+        sounds={activeSounds}
         masterVolume={state.master_volume}
         onVolumeChange={async (id, volume) => {
-          await invoke('set_volume', { id, volume });
-          await refreshState();
+          state = await setVolume(id, volume);
         }}
         onMasterVolumeChange={async (volume) => {
-          await invoke('set_master_volume', { volume });
-          await refreshState();
+          state = await setMasterVolume(volume);
         }}
       />
     {/if}
 
     <SoundList
       sounds={state.sounds}
-      hasActiveSounds={state.sounds.some(s => s.is_active)}
+      {hasActiveSounds}
       onToggle={async (id) => {
-        state = await invoke('toggle_sound', { id });
+        state = await toggleSound(id);
       }}
       onImport={refreshState}
       onRemove={async (id) => {
-        await invoke('remove_sound', { id });
-        await refreshState();
+        state = await removeSound(id);
       }}
     />
   {/if}
