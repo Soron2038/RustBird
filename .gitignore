@@ -1,11 +1,20 @@
+# macOS
 .DS_Store
-node_modules
+
+# Node
+node_modules/
+
+# SvelteKit build output
 /build
 /.svelte-kit
 /package
+
+# Environment
 .env
 .env.*
 !.env.example
+
+# Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
@@ -15,5 +24,8 @@ vite.config.ts.timestamp-*
 # Tauri generated
 /src-tauri/gen/
 
-# Brainstorm artifacts
+# Superpowers brainstorm artifacts
 .superpowers/
+
+# Internal planning docs (specs, plans)
+docs/superpowers/
