@@ -2,9 +2,10 @@
   import { invoke } from '@tauri-apps/api/core';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 
-  let { autostartEnabled, crossfadeDuration, onBack } = $props();
-  let autostart = $state(autostartEnabled);
-  let cfDuration = $state(crossfadeDuration);
+  let props = $props();
+  let autostart = $state(props.autostartEnabled);
+  let cfDuration = $state(props.crossfadeDuration);
+  let onBack = props.onBack;
 
   async function toggleAutostart() {
     if (autostart) {

@@ -85,11 +85,11 @@ pub fn run() {
             let app_handle = app.handle().clone();
             app.on_tray_icon_event(move |_tray, event| {
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
-                use tauri_plugin_positioner::{Position, WindowExt};
 
                 if let TrayIconEvent::Click {
                     button: MouseButton::Left,
                     button_state: MouseButtonState::Up,
+                    rect,
                     ..
                 } = event
                 {
@@ -97,7 +97,15 @@ pub fn run() {
                         if window.is_visible().unwrap_or(false) {
                             let _ = window.hide();
                         } else {
-                            let _ = window.move_window(Position::TrayCenter);
+                            // Position window centered below the tray icon
+                            let tray_pos = rect.position.to_logical::<f64>(1.0);
+                            let tray_size = rect.size.to_logical::<f64>(1.0);
+                            let scale = window.scale_factor().unwrap_or(1.0);
+                            let win_size = window.outer_size().unwrap_or_default()
+                                .to_logical::<f64>(scale);
+                            let x = tray_pos.x - (win_size.width / 2.0) + (tray_size.width / 2.0);
+                            let y = tray_pos.y + tray_size.height;
+                            let _ = window.set_position(tauri::LogicalPosition::new(x, y));
                             let _ = window.show();
                             let _ = window.set_focus();
                         }
