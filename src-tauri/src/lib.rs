@@ -101,46 +101,52 @@ pub fn run() {
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
-            // Set up right-click context menu on tray icon
+            // Build the context menu (but don't attach it permanently)
             let quit_item = tauri::menu::MenuItemBuilder::with_id("quit", "Quit BackBird")
                 .build(app)?;
             let tray_menu = tauri::menu::MenuBuilder::new(app)
                 .item(&quit_item)
                 .build()?;
 
-            if let Some(tray) = app.tray_by_id("main") {
-                tray.set_menu(Some(tray_menu))?;
-            }
-
-            // Set up tray icon click to toggle popover window
+            // Set up tray icon events: left-click → popover, right-click → context menu
             let app_handle = app.handle().clone();
-            app.on_tray_icon_event(move |_tray, event| {
+            app.on_tray_icon_event(move |tray, event| {
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 
-                if let TrayIconEvent::Click {
-                    button: MouseButton::Left,
-                    button_state: MouseButtonState::Up,
-                    rect,
-                    ..
-                } = event
-                {
-                    if let Some(window) = app_handle.get_webview_window("main") {
-                        if window.is_visible().unwrap_or(false) {
-                            let _ = window.hide();
-                        } else {
-                            // Position window centered below the tray icon
-                            let tray_pos = rect.position.to_logical::<f64>(1.0);
-                            let tray_size = rect.size.to_logical::<f64>(1.0);
-                            let scale = window.scale_factor().unwrap_or(1.0);
-                            let win_size = window.outer_size().unwrap_or_default()
-                                .to_logical::<f64>(scale);
-                            let x = tray_pos.x - (win_size.width / 2.0) + (tray_size.width / 2.0);
-                            let y = tray_pos.y + tray_size.height;
-                            let _ = window.set_position(tauri::LogicalPosition::new(x, y));
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                match event {
+                    TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        rect,
+                        ..
+                    } => {
+                        // Left click → toggle popover
+                        if let Some(window) = app_handle.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let tray_pos = rect.position.to_logical::<f64>(1.0);
+                                let tray_size = rect.size.to_logical::<f64>(1.0);
+                                let scale = window.scale_factor().unwrap_or(1.0);
+                                let win_size = window.outer_size().unwrap_or_default()
+                                    .to_logical::<f64>(scale);
+                                let x = tray_pos.x - (win_size.width / 2.0) + (tray_size.width / 2.0);
+                                let y = tray_pos.y + tray_size.height;
+                                let _ = window.set_position(tauri::LogicalPosition::new(x, y));
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
                         }
                     }
+                    TrayIconEvent::Click {
+                        button: MouseButton::Right,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } => {
+                        // Right click → show context menu
+                        let _ = tray.set_menu(tray_menu.clone());
+                    }
+                    _ => {}
                 }
             });
 
