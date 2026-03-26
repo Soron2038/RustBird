@@ -27,7 +27,17 @@
   }
   .actions {
     display: flex;
+    align-items: center;
     gap: 6px;
+  }
+  .actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    line-height: 1;
   }
   .active {
     color: var(--text);
