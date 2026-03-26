@@ -32,9 +32,20 @@
 
   <div class="setting-row">
     <span>Autostart</span>
-    <button class="toggle" onclick={toggleAutostart}>
-      {autostart ? 'On' : 'Off'}
-    </button>
+    <div
+      class="toggle-pill"
+      class:active={autostart}
+      onclick={toggleAutostart}
+      onkeydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleAutostart();
+        }
+      }}
+      role="switch"
+      aria-checked={autostart}
+      tabindex="0"
+    ></div>
   </div>
 
   <div class="setting-row">
@@ -76,11 +87,44 @@
     border-bottom: 0.5px solid var(--separator);
     font-size: 12px;
   }
-  .toggle {
-    font-size: 12px;
-    padding: 2px 8px;
-    border: 0.5px solid var(--separator);
-    border-radius: 4px;
+  .toggle-pill {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    border-radius: 11px;
+    background: #2c2c2e;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+
+  .toggle-pill::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #48484a;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    transition: left 0.2s ease, background 0.2s ease;
+  }
+
+  .toggle-pill.active {
+    background: #aeaeb2;
+  }
+
+  .toggle-pill.active::after {
+    left: 18px;
+    background: #ffffff;
+  }
+
+  @media (prefers-color-scheme: light) {
+    .toggle-pill { background: #d1d1d6; }
+    .toggle-pill::after { background: #ffffff; }
+    .toggle-pill.active { background: #8e8e93; }
+    .toggle-pill.active::after { background: #ffffff; }
   }
   .cf-control {
     display: flex;
