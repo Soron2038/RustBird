@@ -1,3 +1,5 @@
+mod audio;
+mod crossfade;
 mod state;
 
 use tauri::Manager;
