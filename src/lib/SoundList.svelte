@@ -5,12 +5,17 @@
   let { sounds, hasActiveSounds, onToggle, onImport, onRemove } = $props();
 
   async function handleImport() {
-    const path = await open({
-      filters: [{ name: 'Audio', extensions: ['mp3', 'wav'] }],
-    });
-    if (path) {
-      await invoke('import_sound', { path });
-      onImport();
+    await invoke('set_dialog_open');
+    try {
+      const path = await open({
+        filters: [{ name: 'Audio', extensions: ['mp3', 'wav'] }],
+      });
+      if (path) {
+        await invoke('import_sound', { path });
+        onImport();
+      }
+    } finally {
+      await invoke('set_dialog_closed');
     }
   }
 </script>
