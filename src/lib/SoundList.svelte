@@ -25,11 +25,14 @@
           {sound.name}
         </span>
         {#if !sound.is_bundled}
-          <button
+          <span
             class="remove-btn"
+            role="button"
+            tabindex="0"
             onclick={(e) => { e.stopPropagation(); onRemove(sound.id); }}
+            onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onRemove(sound.id); } }}
             title="Remove"
-          >×</button>
+          >×</span>
         {/if}
         <span class="dot" class:active={sound.is_active}>
           {sound.is_active ? '●' : '○'}

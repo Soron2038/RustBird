@@ -8,6 +8,7 @@ use commands::{AudioEngineMutex, AppStateMutex};
 use state::{discover_bundled_sounds, discover_user_sounds, load_persisted_state, AppState};
 use std::sync::Mutex;
 use tauri::Manager;
+use tauri_plugin_autostart::ManagerExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -71,6 +72,11 @@ pub fn run() {
                 }
             }
 
+            // Enable autostart if configured
+            if app_state.autostart_enabled {
+                let _ = app.autolaunch().enable();
+            }
+
             // Register managed state
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
@@ -105,6 +111,14 @@ pub fn run() {
             if let tauri::WindowEvent::Focused(false) = event {
                 if window.label() == "main" {
                     let _ = window.hide();
+                }
+            }
+            if let tauri::WindowEvent::Destroyed = event {
+                if window.label() == "main" {
+                    if let Some(state) = window.try_state::<AppStateMutex>() {
+                        let app_state = state.0.lock().unwrap();
+                        let _ = crate::state::save_state(&app_state);
+                    }
                 }
             }
         })
