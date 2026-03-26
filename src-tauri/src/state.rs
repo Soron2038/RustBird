@@ -87,7 +87,7 @@ pub fn app_data_dir() -> PathBuf {
     let home = dirs::home_dir().expect("Could not find home directory");
     home.join("Library")
         .join("Application Support")
-        .join("BackBird")
+        .join("RustBird")
 }
 
 pub fn config_path() -> PathBuf {

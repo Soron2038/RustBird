@@ -102,7 +102,7 @@ pub fn run() {
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
             // Set up tray menu (right-click only) and popover (left-click)
-            let quit_item = tauri::menu::MenuItemBuilder::with_id("quit", "Quit BackBird")
+            let quit_item = tauri::menu::MenuItemBuilder::with_id("quit", "Quit RustBird")
                 .build(app)?;
             let tray_menu = tauri::menu::MenuBuilder::new(app)
                 .item(&quit_item)

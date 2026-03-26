@@ -3,7 +3,7 @@
 </script>
 
 <header>
-  <span class="title">BackBird</span>
+  <span class="title">RustBird</span>
   <div class="actions">
     <button onclick={onTogglePause} title={isPaused ? 'Resume' : 'Pause'}>
       {isPaused ? '▶' : '⏸'}

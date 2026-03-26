@@ -53,7 +53,7 @@
   </div>
 
   <div class="about">
-    <div class="about-title">BackBird</div>
+    <div class="about-title">RustBird</div>
     <div class="about-version">Version 0.1.0</div>
     <div class="about-desc">Ambient bird songs for focus & relaxation.</div>
   </div>
