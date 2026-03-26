@@ -101,6 +101,17 @@ pub fn run() {
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
+            // Set up right-click context menu on tray icon
+            let quit_item = tauri::menu::MenuItemBuilder::with_id("quit", "Quit BackBird")
+                .build(app)?;
+            let tray_menu = tauri::menu::MenuBuilder::new(app)
+                .item(&quit_item)
+                .build()?;
+
+            if let Some(tray) = app.tray_by_id("main") {
+                tray.set_menu(Some(tray_menu))?;
+            }
+
             // Set up tray icon click to toggle popover window
             let app_handle = app.handle().clone();
             app.on_tray_icon_event(move |_tray, event| {
@@ -134,6 +145,16 @@ pub fn run() {
             });
 
             Ok(())
+        })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == "quit" {
+                // Save state before quitting
+                if let Some(state) = app.try_state::<AppStateMutex>() {
+                    let app_state = state.0.lock().unwrap();
+                    let _ = crate::state::save_state(&app_state);
+                }
+                app.exit(0);
+            }
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Focused(false) = event {
