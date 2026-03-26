@@ -182,6 +182,8 @@ pub fn run() {
             commands::import_sound,
             commands::remove_sound,
             commands::set_crossfade_duration,
+            commands::set_dialog_open,
+            commands::set_dialog_closed,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

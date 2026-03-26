@@ -265,3 +265,17 @@ pub fn set_crossfade_duration(
     save_state(&app_state)?;
     Ok(app_state.clone())
 }
+
+#[tauri::command]
+pub fn set_dialog_open(state: State<'_, AppStateMutex>) -> Result<(), String> {
+    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+    app_state.dialog_open = true;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_dialog_closed(state: State<'_, AppStateMutex>) -> Result<(), String> {
+    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+    app_state.dialog_open = false;
+    Ok(())
+}
