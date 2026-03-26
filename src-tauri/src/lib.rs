@@ -160,7 +160,13 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Focused(false) = event {
                 if window.label() == "main" {
-                    let _ = window.hide();
+                    let should_hide = window
+                        .try_state::<AppStateMutex>()
+                        .map(|state| !state.0.lock().unwrap().dialog_open)
+                        .unwrap_or(true);
+                    if should_hide {
+                        let _ = window.hide();
+                    }
                 }
             }
             if let tauri::WindowEvent::Destroyed = event {
