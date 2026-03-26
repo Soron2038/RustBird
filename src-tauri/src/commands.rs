@@ -3,7 +3,7 @@ use crate::state::{save_state, user_sounds_dir, AppState, Sound};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 use uuid::Uuid;
 
 pub struct AppStateMutex(pub Mutex<AppState>);
@@ -24,43 +24,56 @@ pub fn get_state(state: State<'_, AppStateMutex>) -> Result<AppState, String> {
 #[tauri::command]
 pub fn toggle_sound(
     id: String,
+    app_handle: AppHandle,
     state: State<'_, AppStateMutex>,
     audio: State<'_, AudioEngineMutex>,
 ) -> Result<AppState, String> {
-    let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-    let mut audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
-
-    // Collect the values we need before taking the mutable borrow
-    let (was_active, file_path, volume) = {
+    // Read info and update state immediately so the UI responds instantly
+    let (was_active, file_path, volume, is_paused, crossfade) = {
+        let mut app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
+        // Read all values first (immutable borrows)
+        let is_paused = app_state.is_paused;
+        let crossfade = app_state.crossfade_duration;
         let sound = app_state
             .sounds
             .iter()
             .find(|s| s.id == id)
             .ok_or_else(|| format!("Sound not found: {}", id))?;
-        (sound.is_active, sound.file_path.clone(), sound.volume)
+        let was_active = sound.is_active;
+        let file_path = sound.file_path.clone();
+        let volume = sound.volume;
+        // Now mutate
+        let sound = app_state.sounds.iter_mut().find(|s| s.id == id).unwrap();
+        sound.is_active = !was_active;
+        let _ = save_state(&app_state);
+        (was_active, file_path, volume, is_paused, crossfade)
     };
 
-    let is_paused = app_state.is_paused;
-    let crossfade = app_state.crossfade_duration;
-
-    // Now mutate the sound
-    let sound = app_state
-        .sounds
-        .iter_mut()
-        .find(|s| s.id == id)
-        .unwrap(); // safe: we found it above
-
+    // Stop is fast — do it inline
     if was_active {
-        sound.is_active = false;
+        let mut audio_engine = audio.0.lock().map_err(|e| format!("Lock error: {}", e))?;
         audio_engine.stop_sound(&id);
-    } else {
-        sound.is_active = true;
-        if !is_paused {
-            audio_engine.play_sound(&id, &file_path, volume, crossfade)?;
-        }
+    } else if !is_paused {
+        // Decode + play is slow — spawn on background thread so UI doesn't freeze
+        let id_clone = id.clone();
+        std::thread::spawn(move || {
+            let audio_state = app_handle.state::<AudioEngineMutex>();
+            let mut audio_engine = audio_state.0.lock().unwrap();
+            if let Err(e) = audio_engine.play_sound(&id_clone, &file_path, volume, crossfade) {
+                eprintln!("Failed to play sound {}: {}", id_clone, e);
+                // Revert state on error
+                let state = app_handle.state::<AppStateMutex>();
+                let mut app_state = state.0.lock().unwrap();
+                if let Some(sound) = app_state.sounds.iter_mut().find(|s| s.id == id_clone) {
+                    sound.is_active = false;
+                }
+                let _ = save_state(&app_state);
+            }
+        });
     }
 
-    save_state(&app_state)?;
+    // Return updated state immediately — audio loads in background
+    let app_state = state.0.lock().map_err(|e| format!("Lock error: {}", e))?;
     Ok(app_state.clone())
 }
 
