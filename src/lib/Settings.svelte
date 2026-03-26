@@ -1,11 +1,16 @@
 <script>
   import { invoke } from '@tauri-apps/api/core';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
+  import { onMount } from 'svelte';
 
-  /* eslint-disable state_referenced_locally */
   let { autostartEnabled, crossfadeDuration, onBack } = $props();
-  let autostart = $state(autostartEnabled);  // local mutable copy
-  let cfDuration = $state(crossfadeDuration);  // local mutable copy
+  let autostart = $state(false);
+  let cfDuration = $state(2.0);
+
+  onMount(() => {
+    autostart = autostartEnabled;
+    cfDuration = crossfadeDuration;
+  });
 
   async function toggleAutostart() {
     if (autostart) {
