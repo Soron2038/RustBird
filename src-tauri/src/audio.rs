@@ -111,7 +111,4 @@ impl AudioEngine {
         }
     }
 
-    pub fn is_sound_playing(&self, id: &str) -> bool {
-        self.sinks.contains_key(id)
-    }
 }

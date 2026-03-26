@@ -2,10 +2,10 @@
   import { invoke } from '@tauri-apps/api/core';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
 
-  let props = $props();
-  let autostart = $state(props.autostartEnabled);
-  let cfDuration = $state(props.crossfadeDuration);
-  let onBack = props.onBack;
+  /* eslint-disable state_referenced_locally */
+  let { autostartEnabled, crossfadeDuration, onBack } = $props();
+  let autostart = $state(autostartEnabled);  // local mutable copy
+  let cfDuration = $state(crossfadeDuration);  // local mutable copy
 
   async function toggleAutostart() {
     if (autostart) {

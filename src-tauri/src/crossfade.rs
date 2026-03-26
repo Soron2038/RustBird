@@ -7,7 +7,7 @@ pub struct CrossfadeLoop {
     channels: u16,
     sample_rate: u32,
     crossfade_samples: usize,
-    total_frames: usize,
+    _total_frames: usize,
 }
 
 impl CrossfadeLoop {
@@ -22,7 +22,7 @@ impl CrossfadeLoop {
             channels,
             sample_rate,
             crossfade_samples: crossfade_frames * channels as usize,
-            total_frames,
+            _total_frames: total_frames,
         }
     }
 
