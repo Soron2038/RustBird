@@ -33,7 +33,7 @@
   <div class="setting-row">
     <span>Autostart</span>
     <button class="toggle" onclick={toggleAutostart}>
-      {autostart ? 'An' : 'Aus'}
+      {autostart ? 'On' : 'Off'}
     </button>
   </div>
 

@@ -42,7 +42,7 @@
   </div>
 
   <button class="import-btn" onclick={handleImport}>
-    ＋ Hinzufügen
+    ＋ Add Sound
   </button>
 </section>
 

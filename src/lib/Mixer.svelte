@@ -3,7 +3,7 @@
 </script>
 
 <section class="mixer">
-  <div class="section-label">Aktiver Mix</div>
+  <div class="section-label">Now Playing</div>
 
   <div class="faders">
     {#each sounds as sound (sound.id)}
