@@ -1,9 +1,13 @@
-<script>
+<script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
+  import { enable, disable } from '@tauri-apps/plugin-autostart';
   import { onMount } from 'svelte';
 
-  let { autostartEnabled, crossfadeDuration, onBack } = $props();
+  let { autostartEnabled, crossfadeDuration, onBack }: {
+    autostartEnabled: boolean;
+    crossfadeDuration: number;
+    onBack: () => void;
+  } = $props();
   let autostart = $state(false);
   let cfDuration = $state(2.0);
 
@@ -21,7 +25,7 @@
     autostart = !autostart;
   }
 
-  async function updateCrossfade(value) {
+  async function updateCrossfade(value: number) {
     cfDuration = value;
     await invoke('set_crossfade_duration', { duration: value });
   }
@@ -57,7 +61,7 @@
         max="500"
         value={Math.round(cfDuration * 100)}
         class="cf-slider"
-        oninput={(e) => updateCrossfade(parseInt(e.target.value) / 100)}
+        oninput={(e) => updateCrossfade(parseInt((e.target as HTMLInputElement).value) / 100)}
       />
       <span class="cf-value">{cfDuration.toFixed(1)}s</span>
     </div>

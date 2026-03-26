@@ -1,8 +1,15 @@
-<script>
+<script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
   import { open } from '@tauri-apps/plugin-dialog';
+  import type { Sound } from '$lib/types';
 
-  let { sounds, hasActiveSounds, onToggle, onImport, onRemove } = $props();
+  let { sounds, hasActiveSounds, onToggle, onImport, onRemove }: {
+    sounds: Sound[];
+    hasActiveSounds: boolean;
+    onToggle: (id: string) => void;
+    onImport: () => void;
+    onRemove: (id: string) => void;
+  } = $props();
 
   async function handleImport() {
     await invoke('set_dialog_open');

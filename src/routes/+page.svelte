@@ -1,12 +1,15 @@
-<script>
+<svelte:options runes={true} />
+
+<script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
   import { onMount } from 'svelte';
+  import type { AppState } from '$lib/types';
   import Header from '$lib/Header.svelte';
   import Mixer from '$lib/Mixer.svelte';
   import SoundList from '$lib/SoundList.svelte';
   import Settings from '$lib/Settings.svelte';
 
-  let state = $state(null);
+  let state: AppState | null = $state(null);
   let showSettings = $state(false);
 
   onMount(async () => {
@@ -27,7 +30,7 @@
     isPaused={state.is_paused}
     {showSettings}
     onTogglePause={async () => {
-      if (state.is_paused) {
+      if (state!.is_paused) {
         await invoke('resume_all');
       } else {
         await invoke('pause_all');

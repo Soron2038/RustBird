@@ -1,5 +1,12 @@
-<script>
-  let { sounds, masterVolume, onVolumeChange, onMasterVolumeChange } = $props();
+<script lang="ts">
+  import type { Sound } from '$lib/types';
+
+  let { sounds, masterVolume, onVolumeChange, onMasterVolumeChange }: {
+    sounds: Sound[];
+    masterVolume: number;
+    onVolumeChange: (id: string, volume: number) => void;
+    onMasterVolumeChange: (volume: number) => void;
+  } = $props();
 </script>
 
 <section class="mixer">
@@ -19,7 +26,7 @@
             max="100"
             value={Math.round(sound.volume * 100)}
             class="vertical-slider"
-            oninput={(e) => onVolumeChange(sound.id, parseInt(e.target.value) / 100)}
+            oninput={(e) => onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
           />
         </div>
       </div>
@@ -34,7 +41,7 @@
       max="100"
       value={Math.round(masterVolume * 100)}
       class="master-slider"
-      oninput={(e) => onMasterVolumeChange(parseInt(e.target.value) / 100)}
+      oninput={(e) => onMasterVolumeChange(parseInt((e.target as HTMLInputElement).value) / 100)}
     />
     <span class="master-icon">🔊</span>
   </div>
