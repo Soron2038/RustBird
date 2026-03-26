@@ -19,6 +19,8 @@ pub struct AppState {
     pub is_paused: bool,
     pub crossfade_duration: f32,
     pub autostart_enabled: bool,
+    #[serde(skip)]
+    pub dialog_open: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -45,6 +47,7 @@ impl Default for AppState {
             is_paused: false,
             crossfade_duration: 2.0,
             autostart_enabled: true,
+            dialog_open: false,
         }
     }
 }
