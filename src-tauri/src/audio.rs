@@ -1,8 +1,6 @@
-use crate::crossfade::CrossfadeLoop;
-use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
+use crate::crossfade::StreamingCrossfadeLoop;
+use rodio::{OutputStream, OutputStreamHandle, Sink, Source};
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::BufReader;
 use std::path::Path;
 use std::time::Duration;
 
@@ -60,21 +58,8 @@ impl AudioEngine {
         &self,
         file_path: &Path,
         crossfade_secs: f32,
-    ) -> Result<CrossfadeLoop, String> {
-        let file = File::open(file_path).map_err(|e| format!("File open error: {}", e))?;
-        let reader = BufReader::new(file);
-        let source = Decoder::new(reader).map_err(|e| format!("Decode error: {}", e))?;
-
-        let channels = source.channels();
-        let sample_rate = source.sample_rate();
-
-        let samples: Vec<i16> = source.collect();
-
-        if samples.is_empty() {
-            return Err("Audio file is empty".to_string());
-        }
-
-        Ok(CrossfadeLoop::new(samples, channels, sample_rate, crossfade_secs))
+    ) -> Result<StreamingCrossfadeLoop, String> {
+        StreamingCrossfadeLoop::new(file_path, crossfade_secs)
     }
 
     pub fn stop_sound(&mut self, id: &str) {
