@@ -38,6 +38,7 @@
       "icons/icon.icns",
       "icons/icon.png"
     ],
+    "resources": ["../assets/sounds/*"],
     "macOS": {
       "minimumSystemVersion": "10.15"
     }
