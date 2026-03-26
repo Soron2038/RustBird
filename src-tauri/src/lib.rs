@@ -24,13 +24,33 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
-            // Discover bundled sounds from the app resources directory
+            // Discover bundled sounds
             let mut sounds = Vec::new();
 
+            // In production: sounds are in the app bundle's resource dir
+            // In development: fall back to the project's assets/sounds/ directory
+            let mut found_bundled = false;
             if let Ok(resource_dir) = app.path().resource_dir() {
-                let bundled_dir = resource_dir.join("assets").join("sounds");
-                let mut bundled = discover_bundled_sounds(&bundled_dir);
-                sounds.append(&mut bundled);
+                // Try several possible resource paths
+                for subpath in &["sounds", "assets/sounds"] {
+                    let dir = resource_dir.join(subpath);
+                    let bundled = discover_bundled_sounds(&dir);
+                    if !bundled.is_empty() {
+                        sounds.extend(bundled);
+                        found_bundled = true;
+                        break;
+                    }
+                }
+            }
+
+            // Dev fallback: check relative to the Cargo manifest directory
+            if !found_bundled {
+                let dev_sounds = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .parent()
+                    .map(|p| p.join("assets").join("sounds"))
+                    .unwrap_or_default();
+                let bundled = discover_bundled_sounds(&dev_sounds);
+                sounds.extend(bundled);
             }
 
             // Discover user-imported sounds
