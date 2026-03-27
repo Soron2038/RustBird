@@ -45,6 +45,7 @@ body {
   color: var(--text);
   background: var(--bg);
   overflow: hidden;
+  border-radius: 10px;
   user-select: none;
   -webkit-user-select: none;
   height: 100%;

@@ -27,6 +27,8 @@
     display: flex;
     align-items: center;
     padding: 12px 14px 8px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--separator);
   }
   .title {
     flex: 1;
