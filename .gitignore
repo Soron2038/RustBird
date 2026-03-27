@@ -32,3 +32,6 @@ docs/superpowers/
 
 # Claude Code local project settings (personal overrides)
 .claude/settings.local.json
+
+# Warp 
+AGENTS.md
