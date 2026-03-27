@@ -55,7 +55,7 @@
 
 <style>
   .mixer {
-    padding: 0 14px 8px;
+    padding: 10px 14px 8px;
     border-bottom: 0.5px solid var(--separator);
   }
   .faders {
