@@ -35,3 +35,6 @@ docs/superpowers/
 
 # Warp 
 AGENTS.md
+
+# VSCode
+.vscode/settings.json
