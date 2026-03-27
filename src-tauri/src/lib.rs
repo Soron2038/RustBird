@@ -131,9 +131,9 @@ pub fn run() {
                         if window.is_visible().unwrap_or(false) {
                             let _ = window.hide();
                         } else {
-                            let tray_pos = rect.position.to_logical::<f64>(1.0);
-                            let tray_size = rect.size.to_logical::<f64>(1.0);
                             let scale = window.scale_factor().unwrap_or(1.0);
+                            let tray_pos = rect.position.to_logical::<f64>(scale);
+                            let tray_size = rect.size.to_logical::<f64>(scale);
                             let win_size = window
                                 .outer_size()
                                 .unwrap_or_default()
