@@ -43,19 +43,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-size: 13px;
   color: var(--text);
-  background: var(--bg);
+  background: transparent;
   overflow: hidden;
-  border-radius: 10px;
   user-select: none;
   -webkit-user-select: none;
   height: 100%;
-}
-
-#app,
-body > div {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
 .section-label {
