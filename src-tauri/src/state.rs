@@ -20,8 +20,11 @@ pub struct AppState {
     pub is_paused: bool,
     pub crossfade_duration: f32,
     pub autostart_enabled: bool,
+    pub autopause_on_lock: bool,
     #[serde(skip)]
     pub dialog_open: bool,
+    #[serde(skip)]
+    pub lock_triggered_pause: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,6 +34,8 @@ pub struct PersistedState {
     pub is_paused: bool,
     pub crossfade_duration: f32,
     pub autostart_enabled: bool,
+    #[serde(default)]
+    pub autopause_on_lock: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,7 +53,9 @@ impl Default for AppState {
             is_paused: false,
             crossfade_duration: 2.0,
             autostart_enabled: true,
+            autopause_on_lock: false,
             dialog_open: false,
+            lock_triggered_pause: false,
         }
     }
 }
@@ -69,6 +76,7 @@ impl AppState {
             is_paused: self.is_paused,
             crossfade_duration: self.crossfade_duration,
             autostart_enabled: self.autostart_enabled,
+            autopause_on_lock: self.autopause_on_lock,
         }
     }
 
@@ -77,6 +85,7 @@ impl AppState {
         self.is_paused = persisted.is_paused;
         self.crossfade_duration = persisted.crossfade_duration;
         self.autostart_enabled = persisted.autostart_enabled;
+        self.autopause_on_lock = persisted.autopause_on_lock;
 
         for ps in &persisted.sound_states {
             if let Some(sound) = self.sounds.iter_mut().find(|s| s.id == ps.id) {
@@ -217,7 +226,9 @@ mod tests {
             is_paused: true,
             crossfade_duration: 3.5,
             autostart_enabled: false,
+            autopause_on_lock: true,
             dialog_open: false,
+            lock_triggered_pause: false,
         };
 
         // Round-trip through JSON
@@ -239,6 +250,7 @@ mod tests {
         assert_eq!(new_state.is_paused, state.is_paused);
         assert_eq!(new_state.crossfade_duration, state.crossfade_duration);
         assert_eq!(new_state.autostart_enabled, state.autostart_enabled);
+        assert_eq!(new_state.autopause_on_lock, state.autopause_on_lock);
 
         let rain = new_state.sounds.iter().find(|s| s.id == "rain").unwrap();
         assert!(rain.is_active);
@@ -275,6 +287,7 @@ mod tests {
             is_paused: true,
             crossfade_duration: 1.0,
             autostart_enabled: false,
+            autopause_on_lock: false,
         };
 
         // Must not panic
@@ -336,6 +349,37 @@ mod tests {
         let names: Vec<&str> = sounds.iter().map(|s| s.name.as_str()).collect();
 
         assert_eq!(names, vec!["Alpha", "Middle", "Zebra"]);
+    }
+
+    // ── autopause_on_lock persistence ────────────────────────────────
+
+    #[test]
+    fn autopause_on_lock_persisted() {
+        let state = AppState {
+            autopause_on_lock: true,
+            ..AppState::default()
+        };
+        let persisted = state.to_persisted();
+        assert!(persisted.autopause_on_lock);
+
+        let json = serde_json::to_string(&persisted).expect("serialize");
+        let restored: PersistedState = serde_json::from_str(&json).expect("deserialize");
+
+        let mut new_state = AppState::default();
+        new_state.apply_persisted(&restored);
+        assert!(new_state.autopause_on_lock);
+    }
+
+    #[test]
+    fn lock_triggered_pause_not_persisted() {
+        let state = AppState {
+            lock_triggered_pause: true,
+            ..AppState::default()
+        };
+        let persisted = state.to_persisted();
+        let json = serde_json::to_string(&persisted).expect("serialize");
+        // lock_triggered_pause must not appear in the JSON
+        assert!(!json.contains("lock_triggered_pause"));
     }
 
     // ── capitalize_first ─────────────────────────────────────────────

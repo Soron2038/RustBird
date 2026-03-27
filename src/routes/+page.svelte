@@ -61,6 +61,7 @@
   {#if showSettings}
     <Settings
       autostartEnabled={state.autostart_enabled}
+      autopauseOnLock={state.autopause_on_lock}
       crossfadeDuration={state.crossfade_duration}
       onBack={() => (showSettings = false)}
     />

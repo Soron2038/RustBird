@@ -13,4 +13,5 @@ export interface AppState {
   is_paused: boolean;
   crossfade_duration: number;
   autostart_enabled: boolean;
+  autopause_on_lock: boolean;
 }

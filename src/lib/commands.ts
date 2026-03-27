@@ -25,3 +25,5 @@ export const setCrossfadeDuration = (duration: number) =>
   invokeCommand<void>('set_crossfade_duration', { duration });
 export const setDialogOpen = () => invokeCommand<void>('set_dialog_open');
 export const setDialogClosed = () => invokeCommand<void>('set_dialog_closed');
+export const setAutopauseOnLock = (enabled: boolean) =>
+  invokeCommand<AppState>('set_autopause_on_lock', { enabled });

@@ -2,6 +2,8 @@ mod audio;
 mod commands;
 mod crossfade;
 mod error;
+#[cfg(target_os = "macos")]
+mod lock_listener;
 mod state;
 
 use audio::AudioEngine;
@@ -102,6 +104,10 @@ pub fn run() {
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
+            // Start macOS screen-lock listener
+            #[cfg(target_os = "macos")]
+            lock_listener::start(app.handle().clone());
+
             // Set up tray menu (right-click only) and popover (left-click)
             let quit_item =
                 tauri::menu::MenuItemBuilder::with_id("quit", "Quit RustBird").build(app)?;
@@ -199,6 +205,7 @@ pub fn run() {
             commands::set_crossfade_duration,
             commands::set_dialog_open,
             commands::set_dialog_closed,
+            commands::set_autopause_on_lock,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

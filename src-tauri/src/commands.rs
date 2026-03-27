@@ -309,6 +309,20 @@ pub fn set_crossfade_duration(
 }
 
 #[tauri::command]
+pub fn set_autopause_on_lock(
+    enabled: bool,
+    state: State<'_, AppStateMutex>,
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
+    app_state.autopause_on_lock = enabled;
+    save_state(&app_state)?;
+    Ok(app_state.clone())
+}
+
+#[tauri::command]
 pub fn set_dialog_open(state: State<'_, AppStateMutex>) -> Result<(), AppError> {
     let mut app_state = state
         .0
