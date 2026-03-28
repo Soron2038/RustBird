@@ -2,7 +2,7 @@ mod audio;
 mod commands;
 mod crossfade;
 mod error;
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 mod lock_listener;
 mod state;
 
@@ -104,8 +104,8 @@ pub fn run() {
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
 
-            // Start macOS screen-lock listener
-            #[cfg(target_os = "macos")]
+            // Start screen-lock listener (macOS + Windows)
+            #[cfg(any(target_os = "macos", target_os = "windows"))]
             lock_listener::start(app.handle().clone());
 
             // Set up tray menu (right-click only) and popover (left-click)
