@@ -144,8 +144,33 @@ pub fn run() {
                                 .outer_size()
                                 .unwrap_or_default()
                                 .to_logical::<f64>(scale);
-                            let x = tray_pos.x - (win_size.width / 2.0) + (tray_size.width / 2.0);
-                            let y = tray_pos.y + tray_size.height;
+
+                            // Determine screen bounds so we can pick the right side of the tray.
+                            let (screen_x, screen_y, screen_w, screen_h) = window
+                                .current_monitor()
+                                .ok()
+                                .flatten()
+                                .map(|m| {
+                                    let pos = m.position().to_logical::<f64>(scale);
+                                    let size = m.size().to_logical::<f64>(scale);
+                                    (pos.x, pos.y, size.width, size.height)
+                                })
+                                .unwrap_or((0.0, 0.0, 1920.0, 1080.0));
+
+                            // Show above tray when it's in the lower screen half (Windows taskbar),
+                            // below when it's in the upper half (macOS menu bar).
+                            let y = if tray_pos.y > screen_y + screen_h / 2.0 {
+                                tray_pos.y - win_size.height
+                            } else {
+                                tray_pos.y + tray_size.height
+                            };
+
+                            // Clamp horizontally so the window stays on-screen.
+                            let x = (tray_pos.x - (win_size.width / 2.0)
+                                + (tray_size.width / 2.0))
+                                .max(screen_x)
+                                .min(screen_x + screen_w - win_size.width);
+
                             let _ = window.set_position(tauri::LogicalPosition::new(x, y));
                             let _ = window.show();
                             let _ = window.set_focus();
