@@ -203,6 +203,7 @@ mod windows_impl {
                                 audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
                             engine.pause_all();
                         }
+                        return LRESULT(0);
                     }
                     WTS_SESSION_UNLOCK => {
                         let should_resume = {
@@ -222,11 +223,12 @@ mod windows_impl {
                                 audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
                             engine.resume_all();
                         }
+                        return LRESULT(0);
                     }
                     _ => {}
                 }
             }
-            return LRESULT(0);
+            // Fall through to DefWindowProcW for unhandled subtypes
         }
         DefWindowProcW(hwnd, msg, wparam, lparam)
     }
@@ -239,7 +241,7 @@ mod windows_impl {
         std::thread::spawn(move || unsafe {
             use windows::core::w;
 
-            let hmodule: HMODULE = GetModuleHandleW(None).unwrap_or_default();
+            let hmodule: HMODULE = GetModuleHandleW(None).expect("GetModuleHandleW failed");
             let hinstance = HINSTANCE(hmodule.0);
             let class_name = w!("RustBirdLockListener");
 
@@ -249,7 +251,14 @@ mod windows_impl {
                 lpszClassName: class_name,
                 ..Default::default()
             };
-            RegisterClassW(&wnd_class);
+            let atom = RegisterClassW(&wnd_class);
+            if atom == 0 {
+                let err = windows::Win32::Foundation::GetLastError();
+                // 1410 = ERROR_CLASS_ALREADY_EXISTS — safe to proceed
+                if err.0 != 1410 {
+                    panic!("RegisterClassW failed: {:?}", err);
+                }
+            }
 
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
@@ -269,7 +278,9 @@ mod windows_impl {
 
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, handle_addr as isize);
 
-            let _ = WTSRegisterSessionNotification(hwnd, NOTIFY_FOR_THIS_SESSION);
+            if let Err(e) = WTSRegisterSessionNotification(hwnd, NOTIFY_FOR_THIS_SESSION) {
+                log::error!("WTSRegisterSessionNotification failed: {:?}. Auto-pause on lock will not work.", e);
+            }
 
             let mut msg = MSG::default();
             loop {
