@@ -149,3 +149,140 @@ mod macos {
 
 #[cfg(target_os = "macos")]
 pub use macos::start;
+
+#[cfg(target_os = "windows")]
+mod windows_impl {
+    use crate::commands::{AppStateMutex, AudioEngineMutex};
+    use crate::state::save_state;
+    use tauri::Manager;
+    use windows::Win32::Foundation::{HINSTANCE, HMODULE, HWND, LPARAM, LRESULT, WPARAM};
+    use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+    use windows::Win32::System::RemoteDesktop::{
+        WTSRegisterSessionNotification, NOTIFY_FOR_THIS_SESSION,
+    };
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CreateWindowExW, DefWindowProcW, DispatchMessageW, GetMessageW, GetWindowLongPtrW,
+        RegisterClassW, SetWindowLongPtrW, GWLP_USERDATA, HWND_MESSAGE, MSG, WINDOW_EX_STYLE,
+        WNDCLASSW, WS_OVERLAPPED,
+    };
+
+    // Raw WinAPI constants not re-exported by the windows crate at this version
+    const WM_WTSSESSION_CHANGE: u32 = 0x02B1;
+    const WTS_SESSION_LOCK: u32 = 7;
+    const WTS_SESSION_UNLOCK: u32 = 8;
+
+    unsafe extern "system" fn wnd_proc(
+        hwnd: HWND,
+        msg: u32,
+        wparam: WPARAM,
+        lparam: LPARAM,
+    ) -> LRESULT {
+        if msg == WM_WTSSESSION_CHANGE {
+            let handle_ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *const tauri::AppHandle;
+            if !handle_ptr.is_null() {
+                let handle = &*handle_ptr;
+                let app_state_mutex = handle.state::<AppStateMutex>();
+                let audio_mutex = handle.state::<AudioEngineMutex>();
+
+                match wparam.0 as u32 {
+                    WTS_SESSION_LOCK => {
+                        let should_pause = {
+                            let mut state =
+                                app_state_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
+                            if state.autopause_on_lock && !state.is_paused {
+                                state.is_paused = true;
+                                state.lock_triggered_pause = true;
+                                let _ = save_state(&state);
+                                true
+                            } else {
+                                false
+                            }
+                        };
+                        if should_pause {
+                            let engine =
+                                audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
+                            engine.pause_all();
+                        }
+                    }
+                    WTS_SESSION_UNLOCK => {
+                        let should_resume = {
+                            let mut state =
+                                app_state_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
+                            if state.lock_triggered_pause {
+                                state.is_paused = false;
+                                state.lock_triggered_pause = false;
+                                let _ = save_state(&state);
+                                true
+                            } else {
+                                false
+                            }
+                        };
+                        if should_resume {
+                            let engine =
+                                audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
+                            engine.resume_all();
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            return LRESULT(0);
+        }
+        DefWindowProcW(hwnd, msg, wparam, lparam)
+    }
+
+    pub fn start(app_handle: tauri::AppHandle) {
+        // Box + leak the handle so its lifetime is 'static, same pattern as macOS side.
+        // Cast to usize to make the value Send (raw pointers are not Send).
+        let handle_addr = Box::into_raw(Box::new(app_handle)) as usize;
+
+        std::thread::spawn(move || unsafe {
+            use windows::core::w;
+
+            let hmodule: HMODULE = GetModuleHandleW(None).unwrap_or_default();
+            let hinstance = HINSTANCE(hmodule.0);
+            let class_name = w!("RustBirdLockListener");
+
+            let wnd_class = WNDCLASSW {
+                lpfnWndProc: Some(wnd_proc),
+                hInstance: hinstance,
+                lpszClassName: class_name,
+                ..Default::default()
+            };
+            RegisterClassW(&wnd_class);
+
+            let hwnd = CreateWindowExW(
+                WINDOW_EX_STYLE::default(),
+                class_name,
+                w!(""),
+                WS_OVERLAPPED,
+                0,
+                0,
+                0,
+                0,
+                HWND_MESSAGE,
+                None,
+                hinstance,
+                None,
+            )
+            .expect("CreateWindowExW failed — cannot start lock listener");
+
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, handle_addr as isize);
+
+            let _ = WTSRegisterSessionNotification(hwnd, NOTIFY_FOR_THIS_SESSION);
+
+            let mut msg = MSG::default();
+            loop {
+                match GetMessageW(&mut msg, None, 0, 0) {
+                    result if result.0 > 0 => {
+                        DispatchMessageW(&msg);
+                    }
+                    _ => break,
+                }
+            }
+        });
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub use windows_impl::start;
