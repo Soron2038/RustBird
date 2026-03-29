@@ -97,11 +97,9 @@ impl AppState {
 }
 
 pub fn app_data_dir() -> Result<PathBuf, AppError> {
-    let home = dirs::home_dir().ok_or(AppError::HomeDirNotFound)?;
-    Ok(home
-        .join("Library")
-        .join("Application Support")
-        .join("RustBird"))
+    dirs::data_dir()
+        .ok_or(AppError::HomeDirNotFound)
+        .map(|d| d.join("RustBird"))
 }
 
 pub fn config_path() -> Result<PathBuf, AppError> {

@@ -1,6 +1,7 @@
 // Lock ordering convention:
-// Always acquire AppStateMutex before AudioEngineMutex.
-// Never hold both locks simultaneously — drop one before acquiring the other.
+// Always acquire AppStateMutex before AudioEngineMutex — never in reverse order.
+// This prevents deadlocks. Holding both simultaneously is allowed when needed (e.g. set_volume),
+// but the acquisition order must always be AppStateMutex first.
 
 use crate::audio::AudioEngine;
 use crate::error::AppError;

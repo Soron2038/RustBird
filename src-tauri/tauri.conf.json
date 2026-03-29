@@ -37,7 +37,9 @@
     "active": true,
     "targets": "all",
     "icon": ["icons/icon.icns", "icons/icon.ico", "icons/icon.png"],
-    "resources": ["../assets/sounds/*"],
+    "resources": {
+      "../assets/sounds/*": "sounds"
+    },
     "macOS": {
       "minimumSystemVersion": "10.15"
     },

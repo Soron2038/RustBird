@@ -256,7 +256,8 @@ mod windows_impl {
                 let err = windows::Win32::Foundation::GetLastError();
                 // 1410 = ERROR_CLASS_ALREADY_EXISTS — safe to proceed
                 if err.0 != 1410 {
-                    panic!("RegisterClassW failed: {:?}", err);
+                    log::error!("RegisterClassW failed: {:?}. Auto-pause on lock will not work.", err);
+                    return;
                 }
             }
 
