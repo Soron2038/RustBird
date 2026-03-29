@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { open } from '@tauri-apps/plugin-dialog';
+  import { open, message } from '@tauri-apps/plugin-dialog';
   import { importSound, setDialogOpen, setDialogClosed } from '$lib/commands';
   import type { Sound } from '$lib/types';
 
@@ -27,6 +27,8 @@
         await importSound(path as string);
         await onImport();
       }
+    } catch (e) {
+      await message(String(e), { kind: 'error', title: 'Import fehlgeschlagen' });
     } finally {
       await setDialogClosed();
     }

@@ -222,7 +222,19 @@ pub fn import_sound(
         candidate
     };
 
-    fs::copy(&src_path, &dest_path)?;
+    if !src_path.exists() {
+        return Err(AppError::Io(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Source file not found: {src_path:?}"),
+        )));
+    }
+
+    fs::copy(&src_path, &dest_path).map_err(|e| {
+        AppError::Io(std::io::Error::new(
+            e.kind(),
+            format!("Failed to copy {src_path:?} to {dest_path:?}: {e}"),
+        ))
+    })?;
 
     let final_stem = dest_path
         .file_stem()
