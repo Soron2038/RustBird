@@ -143,12 +143,12 @@
 
   .scroll-fade.top {
     top: 0;
-    background: linear-gradient(to bottom, var(--bg) 30%, transparent);
+    background: linear-gradient(to bottom, var(--bg), transparent);
   }
 
   .scroll-fade.bottom {
     bottom: 0;
-    background: linear-gradient(to top, var(--bg) 30%, transparent);
+    background: linear-gradient(to top, var(--bg), transparent);
   }
 
   .scroll-fade.visible {
