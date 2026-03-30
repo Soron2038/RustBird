@@ -30,6 +30,8 @@
   }
 
   $effect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    sounds; // re-run when sounds list changes
     updateScroll();
   });
 
