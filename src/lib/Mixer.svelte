@@ -66,17 +66,20 @@
   }
   .fader-column {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 2px;
   }
   .fader-label {
-    font-size: 11px;
-    max-width: 70px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 10px;
+    color: var(--text-secondary);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
     white-space: nowrap;
-    text-align: center;
+    overflow: hidden;
+    max-height: 60px;
+    text-overflow: clip;
+    line-height: 1;
   }
   .fader-track-wrapper {
     position: relative;
