@@ -261,7 +261,7 @@ mod windows_impl {
                 }
             }
 
-            let hwnd = CreateWindowExW(
+            let hwnd = match CreateWindowExW(
                 WINDOW_EX_STYLE::default(),
                 class_name,
                 w!(""),
@@ -274,8 +274,16 @@ mod windows_impl {
                 None,
                 hinstance,
                 None,
-            )
-            .expect("CreateWindowExW failed — cannot start lock listener");
+            ) {
+                Ok(h) => h,
+                Err(e) => {
+                    log::error!(
+                        "CreateWindowExW failed: {:?}. Auto-pause on lock will not work.",
+                        e
+                    );
+                    return;
+                }
+            };
 
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, handle_addr as isize);
 

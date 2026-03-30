@@ -163,7 +163,9 @@ pub fn run() {
                                 tray_pos.y - win_size.height
                             } else {
                                 tray_pos.y + tray_size.height
-                            };
+                            }
+                            .max(screen_y)
+                            .min(screen_y + screen_h - win_size.height);
 
                             // Clamp horizontally so the window stays on-screen.
                             let x = (tray_pos.x - (win_size.width / 2.0)
