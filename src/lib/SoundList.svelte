@@ -19,6 +19,20 @@
 
   let importError = $state<string | null>(null);
 
+  let listEl = $state<HTMLElement | null>(null);
+  let canScrollUp = $state(false);
+  let canScrollDown = $state(false);
+
+  function updateScroll() {
+    if (!listEl) return;
+    canScrollUp = listEl.scrollTop > 4;
+    canScrollDown = listEl.scrollTop < listEl.scrollHeight - listEl.clientHeight - 4;
+  }
+
+  $effect(() => {
+    updateScroll();
+  });
+
   async function handleImport() {
     importError = null;
     await setDialogOpen();
@@ -41,35 +55,39 @@
 <section class="sound-list" class:expanded={!hasActiveSounds}>
   <div class="section-label">Sounds</div>
 
-  <div class="list">
-    {#each sounds as sound (sound.id)}
-      <button class="sound-row" onclick={() => onToggle(sound.id)}>
-        <span class="sound-name" class:inactive={!sound.is_active}>
-          {sound.name}
-        </span>
-        {#if !sound.is_bundled}
-          <span
-            class="remove-btn"
-            role="button"
-            tabindex="0"
-            onclick={(e) => {
-              e.stopPropagation();
-              onRemove(sound.id);
-            }}
-            onkeydown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+  <div class="list-wrapper">
+    <div class="scroll-fade top" class:visible={canScrollUp}></div>
+    <div class="list" bind:this={listEl} onscroll={updateScroll}>
+      {#each sounds as sound (sound.id)}
+        <button class="sound-row" onclick={() => onToggle(sound.id)}>
+          <span class="sound-name" class:inactive={!sound.is_active}>
+            {sound.name}
+          </span>
+          {#if !sound.is_bundled}
+            <span
+              class="remove-btn"
+              role="button"
+              tabindex="0"
+              onclick={(e) => {
                 e.stopPropagation();
                 onRemove(sound.id);
-              }
-            }}
-            title="Remove">×</span
-          >
-        {/if}
-        <span class="dot" class:active={sound.is_active}>
-          {sound.is_active ? '●' : '○'}
-        </span>
-      </button>
-    {/each}
+              }}
+              onkeydown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  onRemove(sound.id);
+                }
+              }}
+              title="Remove">×</span
+            >
+          {/if}
+          <span class="dot" class:active={sound.is_active}>
+            {sound.is_active ? '●' : '○'}
+          </span>
+        </button>
+      {/each}
+    </div>
+    <div class="scroll-fade bottom" class:visible={canScrollDown}></div>
   </div>
 
   <button class="import-btn" onclick={handleImport}> ＋ Add Sound </button>
@@ -89,10 +107,48 @@
   .expanded {
     padding-top: 0;
   }
+  .list-wrapper {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
   .list {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
+    scrollbar-width: none;
+  }
+
+  .list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 28px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 1;
+  }
+
+  .scroll-fade.top {
+    top: 0;
+    background: linear-gradient(to bottom, var(--bg), transparent);
+  }
+
+  .scroll-fade.bottom {
+    bottom: 0;
+    background: linear-gradient(to top, var(--bg), transparent);
+  }
+
+  .scroll-fade.visible {
+    opacity: 1;
   }
   .sound-row {
     display: flex;

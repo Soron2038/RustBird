@@ -12,6 +12,7 @@ export default ts.config(
   {
     languageOptions: {
       globals: {
+        HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
         console: 'readonly',
         document: 'readonly',
