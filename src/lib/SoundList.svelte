@@ -193,9 +193,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text);
   }
   .sound-name.inactive {
     color: var(--text-secondary);
+  }
+  .sound-row:hover .sound-name {
+    color: var(--text);
   }
   .remove-btn {
     font-size: 14px;
@@ -211,7 +215,7 @@
     margin-left: 4px;
   }
   .dot.active {
-    color: var(--dot-active);
+    color: var(--accent);
   }
   .import-btn {
     display: block;
