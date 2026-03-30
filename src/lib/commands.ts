@@ -19,7 +19,7 @@ export const setMasterVolume = (volume: number) =>
 export const pauseAll = () => invokeCommand<AppState>('pause_all');
 export const resumeAll = () => invokeCommand<AppState>('resume_all');
 export const importSound = (filePath: string) =>
-  invokeCommand<AppState>('import_sound', { file_path: filePath });
+  invokeCommand<AppState>('import_sound', { filePath });
 export const removeSound = (id: string) => invokeCommand<AppState>('remove_sound', { id });
 export const setCrossfadeDuration = (duration: number) =>
   invokeCommand<void>('set_crossfade_duration', { duration });

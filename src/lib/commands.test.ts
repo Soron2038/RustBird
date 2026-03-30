@@ -73,7 +73,7 @@ describe('typed helpers', () => {
   it('importSound passes file_path correctly', async () => {
     mockInvoke.mockResolvedValueOnce({});
     await importSound('/path/to/file.mp3');
-    expect(mockInvoke).toHaveBeenCalledWith('import_sound', { file_path: '/path/to/file.mp3' });
+    expect(mockInvoke).toHaveBeenCalledWith('import_sound', { filePath: '/path/to/file.mp3' });
   });
 
   it('removeSound passes correct args', async () => {
