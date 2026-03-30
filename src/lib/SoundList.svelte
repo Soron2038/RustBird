@@ -17,7 +17,10 @@
     onRemove: (id: string) => Promise<void>;
   } = $props();
 
+  let importError = $state<string | null>(null);
+
   async function handleImport() {
+    importError = null;
     await setDialogOpen();
     try {
       const path = await open({
@@ -27,6 +30,8 @@
         await importSound(path as string);
         await onImport();
       }
+    } catch (err) {
+      importError = err instanceof Error ? err.message : String(err);
     } finally {
       await setDialogClosed();
     }
@@ -68,6 +73,9 @@
   </div>
 
   <button class="import-btn" onclick={handleImport}> ＋ Add Sound </button>
+  {#if importError}
+    <p class="import-error">{importError}</p>
+  {/if}
 </section>
 
 <style>
@@ -127,5 +135,12 @@
     padding: 8px;
     font-size: 11px;
     color: var(--text-secondary);
+  }
+  .import-error {
+    font-size: 10px;
+    color: #e05252;
+    text-align: center;
+    padding: 4px 8px;
+    word-break: break-word;
   }
 </style>
