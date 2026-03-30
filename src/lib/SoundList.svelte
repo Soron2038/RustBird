@@ -59,6 +59,7 @@
 
   <div class="list-wrapper">
     <div class="scroll-fade top" class:visible={canScrollUp}></div>
+    <div class="scroll-caret top" class:visible={canScrollUp}>⌃</div>
     <div class="list" bind:this={listEl} onscroll={updateScroll}>
       {#each sounds as sound (sound.id)}
         <button class="sound-row" onclick={() => onToggle(sound.id)}>
@@ -90,6 +91,7 @@
       {/each}
     </div>
     <div class="scroll-fade bottom" class:visible={canScrollDown}></div>
+    <div class="scroll-caret bottom" class:visible={canScrollDown}>⌄</div>
   </div>
 
   <button class="import-btn" onclick={handleImport}> ＋ Add Sound </button>
@@ -132,7 +134,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    height: 28px;
+    height: 52px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
@@ -141,15 +143,40 @@
 
   .scroll-fade.top {
     top: 0;
-    background: linear-gradient(to bottom, var(--bg), transparent);
+    background: linear-gradient(to bottom, var(--bg) 30%, transparent);
   }
 
   .scroll-fade.bottom {
     bottom: 0;
-    background: linear-gradient(to top, var(--bg), transparent);
+    background: linear-gradient(to top, var(--bg) 30%, transparent);
   }
 
   .scroll-fade.visible {
+    opacity: 1;
+  }
+
+  .scroll-caret {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .scroll-caret.top {
+    top: 4px;
+  }
+
+  .scroll-caret.bottom {
+    bottom: 4px;
+  }
+
+  .scroll-caret.visible {
     opacity: 1;
   }
   .sound-row {

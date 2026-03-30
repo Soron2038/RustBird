@@ -86,4 +86,37 @@ describe('SoundList', () => {
 
     expect(topFade.classList.contains('visible')).toBe(true);
   });
+
+  it('shows bottom caret when list can scroll down', async () => {
+    const { container } = render(SoundList, { props: defaultProps });
+    const list = container.querySelector('.list') as HTMLElement;
+    const bottomCaret = container.querySelector('.scroll-caret.bottom') as HTMLElement;
+
+    expect(bottomCaret).toBeTruthy();
+
+    Object.defineProperty(list, 'scrollHeight', { value: 300, configurable: true });
+    Object.defineProperty(list, 'clientHeight', { value: 150, configurable: true });
+    list.dispatchEvent(new Event('scroll'));
+
+    await tick();
+
+    expect(bottomCaret.classList.contains('visible')).toBe(true);
+  });
+
+  it('shows top caret after scrolling down', async () => {
+    const { container } = render(SoundList, { props: defaultProps });
+    const list = container.querySelector('.list') as HTMLElement;
+    const topCaret = container.querySelector('.scroll-caret.top') as HTMLElement;
+
+    expect(topCaret).toBeTruthy();
+
+    Object.defineProperty(list, 'scrollTop', { get: () => 50, configurable: true });
+    Object.defineProperty(list, 'scrollHeight', { value: 300, configurable: true });
+    Object.defineProperty(list, 'clientHeight', { value: 150, configurable: true });
+    list.dispatchEvent(new Event('scroll'));
+
+    await tick();
+
+    expect(topCaret.classList.contains('visible')).toBe(true);
+  });
 });
