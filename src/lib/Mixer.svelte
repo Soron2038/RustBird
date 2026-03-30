@@ -40,7 +40,21 @@
   </div>
 
   <div class="master">
-    <span class="master-icon">🔈</span>
+    <span class="master-icon">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      </svg>
+    </span>
     <input
       type="range"
       min="0"
@@ -49,7 +63,22 @@
       class="slider-track master-slider"
       oninput={(e) => onMasterVolumeChange(parseInt((e.target as HTMLInputElement).value) / 100)}
     />
-    <span class="master-icon">🔊</span>
+    <span class="master-icon">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      </svg>
+    </span>
   </div>
 </section>
 
@@ -123,7 +152,8 @@
     padding-top: 8px;
   }
   .master-icon {
-    font-size: 10px;
+    display: flex;
+    align-items: center;
     color: var(--text-secondary);
   }
   .master-slider {
