@@ -21,7 +21,7 @@ describe('AboutSection', () => {
     });
   });
 
-  it('calls openUrl() with xeno-canto URL when link is clicked', async () => {
+  it('calls open() with xeno-canto URL when link is clicked', async () => {
     render(AboutSection);
     fireEvent.click(screen.getByText(/xeno-canto\.org/));
     expect(vi.mocked(openUrl)).toHaveBeenCalledWith('https://xeno-canto.org');
