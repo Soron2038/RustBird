@@ -24,6 +24,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             // Hide from Dock on macOS
             #[cfg(target_os = "macos")]
