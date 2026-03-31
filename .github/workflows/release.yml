@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -127,22 +130,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: windows-msi
-          path: artifacts/
+          path: artifacts/windows/
 
       - name: Download macOS Intel artifact
         uses: actions/download-artifact@v4
         with:
           name: macos-intel-dmg
-          path: artifacts/
+          path: artifacts/intel/
 
       - name: Download macOS ARM artifact
         uses: actions/download-artifact@v4
         with:
           name: macos-arm-dmg
-          path: artifacts/
+          path: artifacts/arm/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
+          files: artifacts/**/*
           generate_release_notes: true
