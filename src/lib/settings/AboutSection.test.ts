@@ -21,9 +21,9 @@ describe('AboutSection', () => {
     });
   });
 
-  it('calls open() with xeno-canto URL when link is clicked', async () => {
+  it('opens xeno-canto.org in browser when link is clicked', async () => {
     render(AboutSection);
     fireEvent.click(screen.getByText(/xeno-canto\.org/));
-    expect(vi.mocked(openUrl)).toHaveBeenCalledWith('https://xeno-canto.org');
+    await waitFor(() => expect(vi.mocked(openUrl)).toHaveBeenCalledWith('https://xeno-canto.org'));
   });
 });
