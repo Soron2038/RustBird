@@ -48,7 +48,7 @@
     background: var(--accent);
     left: 50%;
     transform: translateX(-50%);
-    top: -7px;
+    top: -5px;
   }
   .actions {
     display: flex;
