@@ -17,29 +17,35 @@
 <section class="mixer">
   <div class="section-label">Now Playing</div>
 
-  <div class="faders">
-    {#each sounds as sound (sound.id)}
-      <div class="fader-column">
-        <span class="fader-label">{sound.name}</span>
-        <div class="fader-track-wrapper">
-          <div class="fader-track">
-            <div class="fader-fill" style="height: {sound.volume * 100}%"></div>
+  <div class="fader-area">
+    {#if sounds.length > 0}
+      <div class="faders">
+        {#each sounds as sound (sound.id)}
+          <div class="fader-column">
+            <span class="fader-label">{sound.name}</span>
+            <div class="fader-track-wrapper">
+              <div class="fader-track">
+                <div class="fader-fill" style="height: {sound.volume * 100}%"></div>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={Math.round(sound.volume * 100)}
+                class="vertical-slider"
+                oninput={(e) =>
+                  onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
+              />
+            </div>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round(sound.volume * 100)}
-            class="vertical-slider"
-            oninput={(e) =>
-              onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
-          />
-        </div>
+        {/each}
       </div>
-    {/each}
+    {:else}
+      <div class="empty-indicator">· · ·</div>
+    {/if}
   </div>
 
-  <div class="master">
+  <div class="master" class:dimmed={sounds.length === 0}>
     <span class="master-icon">
       <svg
         width="18"
@@ -86,6 +92,13 @@
   .mixer {
     padding: 10px 14px 8px;
     border-bottom: 0.5px solid var(--separator);
+  }
+  /* Fixed-height middle area — same height whether sounds are active or not */
+  .fader-area {
+    height: 76px; /* 60px track + 8px padding top + 8px padding bottom */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .faders {
     display: flex;
@@ -144,12 +157,21 @@
     transform: rotate(-90deg) translateX(-60px);
     transform-origin: top left;
   }
+  .empty-indicator {
+    font-size: 18px;
+    letter-spacing: 6px;
+    color: var(--separator);
+  }
   .master {
     display: flex;
     align-items: center;
     gap: 6px;
     justify-content: center;
     padding-top: 8px;
+    transition: opacity 0.2s ease;
+  }
+  .master.dimmed {
+    opacity: 0.3;
   }
   .master-icon {
     display: flex;
