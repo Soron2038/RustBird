@@ -13,7 +13,7 @@
 </script>
 
 <header>
-  <span class="title">RustBird</span>
+  <span class="title">RustB<span class="accent-i">ı</span>rd</span>
   <div class="actions">
     <button onclick={onTogglePause} title={isPaused ? 'Resume' : 'Pause'}>
       {isPaused ? '▶' : '⏸'}
@@ -34,6 +34,21 @@
     flex: 1;
     font-size: 13px;
     font-weight: 600;
+  }
+  .accent-i {
+    position: relative;
+    display: inline-block;
+  }
+  .accent-i::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    left: 50%;
+    transform: translateX(-50%);
+    top: -9px;
   }
   .actions {
     display: flex;
