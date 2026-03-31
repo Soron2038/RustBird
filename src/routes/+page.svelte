@@ -66,18 +66,16 @@
       onBack={() => (showSettings = false)}
     />
   {:else}
-    {#if hasActiveSounds}
-      <Mixer
-        sounds={activeSounds}
-        masterVolume={state.master_volume}
-        onVolumeChange={async (id, volume) => {
-          state = await setVolume(id, volume);
-        }}
-        onMasterVolumeChange={async (volume) => {
-          state = await setMasterVolume(volume);
-        }}
-      />
-    {/if}
+    <Mixer
+      sounds={activeSounds}
+      masterVolume={state.master_volume}
+      onVolumeChange={async (id, volume) => {
+        state = await setVolume(id, volume);
+      }}
+      onMasterVolumeChange={async (volume) => {
+        state = await setMasterVolume(volume);
+      }}
+    />
 
     <SoundList
       sounds={state.sounds}
