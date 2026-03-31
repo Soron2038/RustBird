@@ -20,9 +20,6 @@
 
   let state = $state<AppState | null>(null);
   let showSettings = $state(false);
-  let hasActiveSounds = $derived(
-    state ? state.sounds.some((s: { is_active: boolean }) => s.is_active) : false,
-  );
   let activeSounds = $derived(
     state ? state.sounds.filter((s: { is_active: boolean }) => s.is_active) : [],
   );
@@ -79,7 +76,6 @@
 
     <SoundList
       sounds={state.sounds}
-      {hasActiveSounds}
       onToggle={async (id) => {
         state = await toggleSound(id);
       }}

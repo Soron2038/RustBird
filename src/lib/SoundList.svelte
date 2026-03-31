@@ -5,13 +5,11 @@
 
   let {
     sounds,
-    hasActiveSounds,
     onToggle,
     onImport,
     onRemove,
   }: {
     sounds: Sound[];
-    hasActiveSounds: boolean;
     onToggle: (id: string) => Promise<void>;
     onImport: () => Promise<void>;
     onRemove: (id: string) => Promise<void>;
@@ -54,7 +52,7 @@
   }
 </script>
 
-<section class="sound-list" class:expanded={!hasActiveSounds}>
+<section class="sound-list">
   <div class="section-label">Sounds</div>
 
   <div class="list-wrapper">
@@ -107,9 +105,7 @@
     flex-direction: column;
     padding: 8px 14px;
     min-height: 0;
-  }
-  .expanded {
-    padding-top: 0;
+    background: var(--bg-secondary);
   }
   .list-wrapper {
     flex: 1;
@@ -143,12 +139,12 @@
 
   .scroll-fade.top {
     top: 0;
-    background: linear-gradient(to bottom, var(--bg), transparent);
+    background: linear-gradient(to bottom, var(--bg-secondary), transparent);
   }
 
   .scroll-fade.bottom {
     bottom: 0;
-    background: linear-gradient(to top, var(--bg), transparent);
+    background: linear-gradient(to top, var(--bg-secondary), transparent);
   }
 
   .scroll-fade.visible {
