@@ -24,7 +24,6 @@ const testSounds = [
 
 const defaultProps = {
   sounds: testSounds,
-  hasActiveSounds: true,
   onToggle: vi.fn(async () => {}),
   onImport: vi.fn(async () => {}),
   onRemove: vi.fn(async () => {}),
