@@ -20,9 +20,6 @@
 
   let state = $state<AppState | null>(null);
   let showSettings = $state(false);
-  let hasActiveSounds = $derived(
-    state ? state.sounds.some((s: { is_active: boolean }) => s.is_active) : false,
-  );
   let activeSounds = $derived(
     state ? state.sounds.filter((s: { is_active: boolean }) => s.is_active) : [],
   );
@@ -66,22 +63,19 @@
       onBack={() => (showSettings = false)}
     />
   {:else}
-    {#if hasActiveSounds}
-      <Mixer
-        sounds={activeSounds}
-        masterVolume={state.master_volume}
-        onVolumeChange={async (id, volume) => {
-          state = await setVolume(id, volume);
-        }}
-        onMasterVolumeChange={async (volume) => {
-          state = await setMasterVolume(volume);
-        }}
-      />
-    {/if}
+    <Mixer
+      sounds={activeSounds}
+      masterVolume={state.master_volume}
+      onVolumeChange={async (id, volume) => {
+        state = await setVolume(id, volume);
+      }}
+      onMasterVolumeChange={async (volume) => {
+        state = await setMasterVolume(volume);
+      }}
+    />
 
     <SoundList
       sounds={state.sounds}
-      {hasActiveSounds}
       onToggle={async (id) => {
         state = await toggleSound(id);
       }}

@@ -26,3 +26,13 @@ vi.mock('@tauri-apps/plugin-autostart', () => ({
 vi.mock('@tauri-apps/plugin-dialog', () => ({
   open: vi.fn(() => Promise.resolve(null)),
 }));
+
+vi.mock('@tauri-apps/api/app', () => ({
+  getVersion: vi.fn(() => Promise.resolve('1.0.0')),
+}));
+
+vi.mock('@tauri-apps/plugin-opener', () => ({
+  openUrl: vi.fn(() => Promise.resolve()),
+  openPath: vi.fn(() => Promise.resolve()),
+  revealItemInDir: vi.fn(() => Promise.resolve()),
+}));

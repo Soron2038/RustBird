@@ -20,8 +20,9 @@ describe('Header', () => {
     expect(screen.getByText('▶')).toBeTruthy();
   });
 
-  it('displays RustBird title', () => {
-    render(Header, { props: defaultProps });
-    expect(screen.getByText('RustBird')).toBeTruthy();
+  it('displays app title with accent styling', () => {
+    const { container } = render(Header, { props: defaultProps });
+    expect(container.querySelector('.title')).toBeTruthy();
+    expect(container.querySelector('.accent-i')).toBeTruthy();
   });
 });

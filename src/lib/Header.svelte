@@ -1,4 +1,6 @@
 <script lang="ts">
+  import AppName from '$lib/AppName.svelte';
+
   let {
     isPaused,
     showSettings,
@@ -13,7 +15,7 @@
 </script>
 
 <header>
-  <span class="title">RustBird</span>
+  <span class="title"><AppName /></span>
   <div class="actions">
     <button onclick={onTogglePause} title={isPaused ? 'Resume' : 'Pause'}>
       {isPaused ? '▶' : '⏸'}

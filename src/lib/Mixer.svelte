@@ -17,30 +17,50 @@
 <section class="mixer">
   <div class="section-label">Now Playing</div>
 
-  <div class="faders">
-    {#each sounds as sound (sound.id)}
-      <div class="fader-column">
-        <span class="fader-label">{sound.name}</span>
-        <div class="fader-track-wrapper">
-          <div class="fader-track">
-            <div class="fader-fill" style="height: {sound.volume * 100}%"></div>
+  <div class="fader-area">
+    {#if sounds.length > 0}
+      <div class="faders">
+        {#each sounds as sound (sound.id)}
+          <div class="fader-column">
+            <span class="fader-label">{sound.name}</span>
+            <div class="fader-track-wrapper">
+              <div class="fader-track">
+                <div class="fader-fill" style="height: {sound.volume * 100}%"></div>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={Math.round(sound.volume * 100)}
+                class="vertical-slider"
+                oninput={(e) =>
+                  onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
+              />
+            </div>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round(sound.volume * 100)}
-            class="vertical-slider"
-            oninput={(e) =>
-              onVolumeChange(sound.id, parseInt((e.target as HTMLInputElement).value) / 100)}
-          />
-        </div>
+        {/each}
       </div>
-    {/each}
+    {:else}
+      <div class="empty-indicator">· · ·</div>
+    {/if}
   </div>
 
-  <div class="master">
-    <span class="master-icon">🔈</span>
+  <div class="master" class:dimmed={sounds.length === 0}>
+    <span class="master-icon">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      </svg>
+    </span>
     <input
       type="range"
       min="0"
@@ -49,7 +69,22 @@
       class="slider-track master-slider"
       oninput={(e) => onMasterVolumeChange(parseInt((e.target as HTMLInputElement).value) / 100)}
     />
-    <span class="master-icon">🔊</span>
+    <span class="master-icon">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      </svg>
+    </span>
   </div>
 </section>
 
@@ -57,6 +92,13 @@
   .mixer {
     padding: 10px 14px 8px;
     border-bottom: 0.5px solid var(--separator);
+  }
+  /* Fixed-height middle area — same height whether sounds are active or not */
+  .fader-area {
+    height: 76px; /* 60px track + 8px padding top + 8px padding bottom */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .faders {
     display: flex;
@@ -66,17 +108,20 @@
   }
   .fader-column {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 2px;
   }
   .fader-label {
-    font-size: 11px;
-    max-width: 70px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 10px;
+    color: var(--text-secondary);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
     white-space: nowrap;
-    text-align: center;
+    overflow: hidden;
+    max-height: 60px;
+    text-overflow: clip;
+    line-height: 1;
   }
   .fader-track-wrapper {
     position: relative;
@@ -112,15 +157,25 @@
     transform: rotate(-90deg) translateX(-60px);
     transform-origin: top left;
   }
+  .empty-indicator {
+    font-size: 18px;
+    letter-spacing: 6px;
+    color: var(--separator);
+  }
   .master {
     display: flex;
     align-items: center;
     gap: 6px;
     justify-content: center;
     padding-top: 8px;
+    transition: opacity 0.2s ease;
+  }
+  .master.dimmed {
+    opacity: 0.3;
   }
   .master-icon {
-    font-size: 10px;
+    display: flex;
+    align-items: center;
     color: var(--text-secondary);
   }
   .master-slider {

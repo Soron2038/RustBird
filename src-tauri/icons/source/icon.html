@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1024px;
+    height: 1024px;
+    overflow: hidden;
+    background: #141414;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: none;
+  }
+
+  /* Upper zone: dark background with bird */
+  .upper {
+    width: 1024px;
+    height: 562px;
+    background: #141414;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 2px separator line, centered (50% of icon width) */
+  .separator {
+    width: 1024px;
+    height: 2px;
+    background: #141414;
+    position: relative;
+  }
+  .separator::after {
+    content: '';
+    position: absolute;
+    left: 256px;
+    right: 256px;
+    top: 0;
+    height: 2px;
+    background: #2e2e2e;
+  }
+
+  /* Lower zone: slightly lighter, holds wordmark */
+  .lower {
+    width: 1024px;
+    height: 460px;
+    background: #1c1c1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bird {
+    width: 420px;
+    height: auto;
+  }
+
+  /* Wordmark — same font stack as the app header */
+  .wordmark {
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-size: 128px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  /* Dotless ı with floating orange dot above — mirrors Header.svelte technique */
+  .accent-i {
+    display: inline-block;
+    position: relative;
+  }
+  .accent-i::before {
+    content: '';
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    background: #FF5E00;
+    border-radius: 50%;
+    top: -38px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+</style>
+</head>
+<body>
+
+  <div class="upper">
+    <!--
+      Bird silhouette: polished redraw of the tray icon bird.
+      ViewBox 0 0 510 300. All shapes white. Eye is #141414 (cutout).
+      Facing right: beak at x~498, tail fan at x~12.
+    -->
+    <svg class="bird" viewBox="0 0 510 300" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- Body: slightly tilted ellipse -->
+      <ellipse cx="240" cy="170" rx="135" ry="88"
+               transform="rotate(-10 240 170)" fill="white"/>
+
+      <!-- Head: circle overlapping body to form neck -->
+      <circle cx="346" cy="98" r="72" fill="white"/>
+
+      <!-- Beak: rightward-pointing triangle -->
+      <polygon points="410,80 498,99 410,118" fill="white"/>
+
+      <!-- Eye: dark circle on top of head, gives depth at large sizes -->
+      <circle cx="360" cy="90" r="14" fill="#141414"/>
+
+      <!-- Tail: three-prong fan shape, extends left -->
+      <path d="M 108,175
+               C 90,165 68,152 45,130
+               C 32,117 20,102 14,90
+               L 34,106
+               C 26,126 24,150 30,170
+               L 12,186
+               C 36,175 60,169 84,168
+               L 70,188
+               C 90,177 98,175 108,172 Z"
+            fill="white"/>
+
+    </svg>
+  </div>
+
+  <div class="separator"></div>
+
+  <div class="lower">
+    <!-- U+0131 = Latin Small Letter Dotless I -->
+    <div class="wordmark">RustB<span class="accent-i">ı</span>rd</div>
+  </div>
+
+</body>
+</html>

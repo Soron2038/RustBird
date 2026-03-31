@@ -33,7 +33,10 @@ docs/superpowers/
 # Claude Code local project settings (personal overrides)
 .claude/settings.local.json
 
-# Warp 
+# Git worktrees
+.worktrees/
+
+# Warp
 AGENTS.md
 
 # VSCode
