@@ -5,6 +5,7 @@ import Mixer from './Mixer.svelte';
 const activeSound = {
   id: '1',
   name: 'Rain',
+  file_path: 'rain.ogg',
   volume: 0.7,
   is_active: true,
   is_bundled: true,
