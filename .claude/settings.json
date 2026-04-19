@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(cargo fmt *)",
+      "Bash(cargo clippy *)",
+      "Bash(cmd /c '\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\VC\\\\Auxiliary\\\\Build\\\\vcvarsall.bat\" x64 && cargo clippy --manifest-path \"c:/Users/soron/Documents/Develop/RustBird/src-tauri/Cargo.toml\" -- -D warnings 2>&1')"
+    ]
+  },
   "hooks": {
     "Stop": [
       {
@@ -6,8 +13,8 @@
           {
             "type": "command",
             "command": "cd /Users/witt/Developer/RustBird && if ! git diff --quiet HEAD 2>/dev/null || [ -n \"$(git ls-files --others --exclude-standard 2>/dev/null)\" ]; then git add -A && git diff --cached --quiet 2>/dev/null || { FILES=$(git diff --cached --name-only 2>/dev/null | head -5 | paste -sd ', ' -) && git commit -m \"auto: ${FILES:-changes}\" && git push origin main; }; fi 2>/dev/null || true",
-            "async": true,
-            "statusMessage": "Auto-committing changes..."
+            "statusMessage": "Auto-committing changes...",
+            "async": true
           }
         ]
       }
