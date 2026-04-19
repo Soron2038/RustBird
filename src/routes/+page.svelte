@@ -18,14 +18,10 @@
   import SoundList from '$lib/SoundList.svelte';
   import Settings from '$lib/Settings.svelte';
 
-  let state = $state<AppState | null>(null);
+  let appState: AppState | null = $state(null);
   let showSettings = $state(false);
-  let activeSounds = $derived(
-    state ? state.sounds.filter((s: { is_active: boolean }) => s.is_active) : [],
-  );
-
   onMount(() => {
-    getState().then((s) => (state = s));
+    getState().then((s) => (appState = s));
     const unlisten = listen('sound-playback-failed', () => refreshState());
     return () => {
       unlisten.then((fn) => fn());
@@ -33,7 +29,7 @@
   });
 
   async function refreshState() {
-    state = await getState();
+    appState = await getState();
   }
 
   function toggleSettings() {
@@ -41,15 +37,15 @@
   }
 </script>
 
-{#if state}
+{#if appState}
   <Header
-    isPaused={state.is_paused}
+    isPaused={appState.is_paused}
     {showSettings}
     onTogglePause={async () => {
-      if (state!.is_paused) {
-        state = await resumeAll();
+      if (appState!.is_paused) {
+        appState = await resumeAll();
       } else {
-        state = await pauseAll();
+        appState = await pauseAll();
       }
     }}
     onToggleSettings={toggleSettings}
@@ -57,31 +53,31 @@
 
   {#if showSettings}
     <Settings
-      autostartEnabled={state.autostart_enabled}
-      autopauseOnLock={state.autopause_on_lock}
-      crossfadeDuration={state.crossfade_duration}
+      autostartEnabled={appState.autostart_enabled}
+      autopauseOnLock={appState.autopause_on_lock}
+      crossfadeDuration={appState.crossfade_duration}
       onBack={() => (showSettings = false)}
     />
   {:else}
     <Mixer
-      sounds={activeSounds}
-      masterVolume={state.master_volume}
+      sounds={appState.sounds.filter((s) => s.is_active)}
+      masterVolume={appState.master_volume}
       onVolumeChange={async (id, volume) => {
-        state = await setVolume(id, volume);
+        appState = await setVolume(id, volume);
       }}
       onMasterVolumeChange={async (volume) => {
-        state = await setMasterVolume(volume);
+        appState = await setMasterVolume(volume);
       }}
     />
 
     <SoundList
-      sounds={state.sounds}
+      sounds={appState.sounds}
       onToggle={async (id) => {
-        state = await toggleSound(id);
+        appState = await toggleSound(id);
       }}
       onImport={refreshState}
       onRemove={async (id) => {
-        state = await removeSound(id);
+        appState = await removeSound(id);
       }}
     />
   {/if}

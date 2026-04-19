@@ -11,6 +11,25 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -qE '[.](svelte|ts)$' && cd /Users/witt/Developer/RustBird && npm run check 2>&1 | tail -25 || true",
+            "timeout": 60,
+            "statusMessage": "Type-checking Svelte/TS..."
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | grep -q '[.]rs$' && cd /Users/witt/Developer/RustBird && cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings 2>&1 | tail -30 || true",
+            "timeout": 120,
+            "statusMessage": "Running cargo clippy..."
+          }
+        ]
+      }
     ]
   }
 }
