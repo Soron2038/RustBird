@@ -7,7 +7,7 @@ mod lock_listener;
 mod state;
 
 use audio::AudioEngine;
-use commands::{AppStateMutex, AudioEngineMutex};
+use commands::{AppStateMutex, AudioEngineMutex, PendingUpdate};
 use state::{discover_bundled_sounds, discover_user_sounds, load_persisted_state, AppState};
 use std::sync::Mutex;
 use tauri::Manager;
@@ -25,6 +25,7 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Hide from Dock on macOS
             #[cfg(target_os = "macos")]
@@ -101,9 +102,34 @@ pub fn run() {
                 let _ = app.autolaunch().enable();
             }
 
+            let auto_update_enabled = app_state.auto_update_enabled;
+
             // Register managed state
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
+            app.manage(PendingUpdate(Mutex::new(None)));
+
+            // Spawn async update check if enabled
+            if auto_update_enabled {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    use tauri_plugin_updater::UpdaterExt;
+                    match app_handle.updater() {
+                        Ok(updater) => match updater.check().await {
+                            Ok(Some(update)) => {
+                                let version = update.version.clone();
+                                if let Some(pending) = app_handle.try_state::<PendingUpdate>() {
+                                    *pending.0.lock().unwrap() = Some(update);
+                                }
+                                let _ = app_handle.emit("update-available", version);
+                            }
+                            Ok(None) => {}
+                            Err(e) => log::warn!("Update check failed: {e}"),
+                        },
+                        Err(e) => log::warn!("Updater not available: {e}"),
+                    }
+                });
+            }
 
             // Start screen-lock listener (macOS + Windows)
             #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -169,8 +195,7 @@ pub fn run() {
                             .min(screen_y + screen_h - win_size.height);
 
                             // Clamp horizontally so the window stays on-screen.
-                            let x = (tray_pos.x - (win_size.width / 2.0)
-                                + (tray_size.width / 2.0))
+                            let x = (tray_pos.x - (win_size.width / 2.0) + (tray_size.width / 2.0))
                                 .max(screen_x)
                                 .min(screen_x + screen_w - win_size.width);
 
@@ -234,6 +259,8 @@ pub fn run() {
             commands::set_dialog_open,
             commands::set_dialog_closed,
             commands::set_autopause_on_lock,
+            commands::set_auto_update_enabled,
+            commands::install_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

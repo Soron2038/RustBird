@@ -27,3 +27,6 @@ export const setDialogOpen = () => invokeCommand<void>('set_dialog_open');
 export const setDialogClosed = () => invokeCommand<void>('set_dialog_closed');
 export const setAutopauseOnLock = (enabled: boolean) =>
   invokeCommand<AppState>('set_autopause_on_lock', { enabled });
+export const setAutoUpdateEnabled = (enabled: boolean) =>
+  invokeCommand<AppState>('set_auto_update_enabled', { enabled });
+export const installUpdate = () => invokeCommand<void>('install_update');

@@ -1,17 +1,20 @@
 <script lang="ts">
   import AutostartToggle from '$lib/settings/AutostartToggle.svelte';
   import AutopauseLockToggle from '$lib/settings/AutopauseLockToggle.svelte';
+  import AutoUpdateToggle from '$lib/settings/AutoUpdateToggle.svelte';
   import CrossfadeSlider from '$lib/settings/CrossfadeSlider.svelte';
   import AboutSection from '$lib/settings/AboutSection.svelte';
 
   let {
     autostartEnabled,
     autopauseOnLock,
+    autoUpdateEnabled,
     crossfadeDuration,
     onBack,
   }: {
     autostartEnabled: boolean;
     autopauseOnLock: boolean;
+    autoUpdateEnabled: boolean;
     crossfadeDuration: number;
     onBack: () => void;
   } = $props();
@@ -21,6 +24,7 @@
   <button class="back-btn" onclick={onBack}>← Back</button>
   <AutostartToggle enabled={autostartEnabled} />
   <AutopauseLockToggle enabled={autopauseOnLock} />
+  <AutoUpdateToggle enabled={autoUpdateEnabled} />
   <CrossfadeSlider duration={crossfadeDuration} />
   <AboutSection />
 </section>

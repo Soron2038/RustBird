@@ -199,8 +199,7 @@ mod windows_impl {
                             }
                         };
                         if should_pause {
-                            let engine =
-                                audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
+                            let engine = audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
                             engine.pause_all();
                         }
                         return LRESULT(0);
@@ -219,8 +218,7 @@ mod windows_impl {
                             }
                         };
                         if should_resume {
-                            let engine =
-                                audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
+                            let engine = audio_mutex.0.lock().unwrap_or_else(|e| e.into_inner());
                             engine.resume_all();
                         }
                         return LRESULT(0);
@@ -256,7 +254,10 @@ mod windows_impl {
                 let err = windows::Win32::Foundation::GetLastError();
                 // 1410 = ERROR_CLASS_ALREADY_EXISTS — safe to proceed
                 if err.0 != 1410 {
-                    log::error!("RegisterClassW failed: {:?}. Auto-pause on lock will not work.", err);
+                    log::error!(
+                        "RegisterClassW failed: {:?}. Auto-pause on lock will not work.",
+                        err
+                    );
                     return;
                 }
             }

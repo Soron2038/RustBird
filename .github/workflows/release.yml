@@ -40,6 +40,9 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: npm run tauri build
 
       - name: Upload MSI installer
@@ -48,6 +51,13 @@ jobs:
           name: windows-msi
           path: src-tauri/target/release/bundle/msi/*.msi
           if-no-files-found: error
+
+      - name: Upload Windows updater artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-updater
+          path: src-tauri/target/release/bundle/msi/*.msi.zip*
+          if-no-files-found: warn
 
   build-macos-intel:
     runs-on: macos-latest
@@ -76,6 +86,9 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app (Intel)
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: npm run tauri build -- --target x86_64-apple-darwin
 
       - name: Upload Intel DMG
@@ -84,6 +97,23 @@ jobs:
           name: macos-intel-dmg
           path: src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
           if-no-files-found: error
+
+      - name: Rename macOS Intel updater artifacts
+        run: |
+          dir="src-tauri/target/x86_64-apple-darwin/release/bundle/macos"
+          for f in "$dir"/*.app.tar.gz; do
+            mv "$f" "${f%.app.tar.gz}_x64.app.tar.gz"
+          done
+          for f in "$dir"/*.app.tar.gz.sig; do
+            mv "$f" "${f%.app.tar.gz.sig}_x64.app.tar.gz.sig"
+          done
+
+      - name: Upload macOS Intel updater artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-intel-updater
+          path: src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*_x64.app.tar.gz*
+          if-no-files-found: warn
 
   build-macos-arm:
     runs-on: macos-latest
@@ -112,6 +142,9 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app (Apple Silicon)
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: npm run tauri build -- --target aarch64-apple-darwin
 
       - name: Upload Apple Silicon DMG
@@ -120,6 +153,23 @@ jobs:
           name: macos-arm-dmg
           path: src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
           if-no-files-found: error
+
+      - name: Rename macOS ARM updater artifacts
+        run: |
+          dir="src-tauri/target/aarch64-apple-darwin/release/bundle/macos"
+          for f in "$dir"/*.app.tar.gz; do
+            mv "$f" "${f%.app.tar.gz}_aarch64.app.tar.gz"
+          done
+          for f in "$dir"/*.app.tar.gz.sig; do
+            mv "$f" "${f%.app.tar.gz.sig}_aarch64.app.tar.gz.sig"
+          done
+
+      - name: Upload macOS ARM updater artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm-updater
+          path: src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*_aarch64.app.tar.gz*
+          if-no-files-found: warn
 
   release:
     needs: [build-windows, build-macos-intel, build-macos-arm]
@@ -147,8 +197,110 @@ jobs:
           name: macos-arm-dmg
           path: artifacts/arm/
 
+      - name: Download Windows updater artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-updater
+          path: artifacts/windows/
+
+      - name: Download macOS Intel updater artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-intel-updater
+          path: artifacts/intel/
+
+      - name: Download macOS ARM updater artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-arm-updater
+          path: artifacts/arm/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: artifacts/**/*
           generate_release_notes: true
+
+  deploy-update-manifest:
+    needs: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download Windows updater artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-updater
+          path: artifacts/windows/
+
+      - name: Download macOS Intel updater artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-intel-updater
+          path: artifacts/intel/
+
+      - name: Download macOS ARM updater artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-arm-updater
+          path: artifacts/arm/
+
+      - name: Generate latest.json
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="$GITHUB_REF_NAME"
+          BASE_URL="https://github.com/Soron2038/RustBird/releases/download/$TAG"
+
+          WIN_ZIP=$(ls artifacts/windows/*.msi.zip 2>/dev/null | grep -v '\.sig$' | head -1)
+          WIN_SIG_FILE=$(ls artifacts/windows/*.msi.zip.sig 2>/dev/null | head -1)
+          MAC_X64_FILE=$(ls artifacts/intel/*_x64.app.tar.gz 2>/dev/null | grep -v '\.sig$' | head -1)
+          MAC_X64_SIG_FILE=$(ls artifacts/intel/*_x64.app.tar.gz.sig 2>/dev/null | head -1)
+          MAC_ARM_FILE=$(ls artifacts/arm/*_aarch64.app.tar.gz 2>/dev/null | grep -v '\.sig$' | head -1)
+          MAC_ARM_SIG_FILE=$(ls artifacts/arm/*_aarch64.app.tar.gz.sig 2>/dev/null | head -1)
+
+          WIN_SIG=$([ -f "$WIN_SIG_FILE" ] && cat "$WIN_SIG_FILE" || echo "")
+          MAC_X64_SIG=$([ -f "$MAC_X64_SIG_FILE" ] && cat "$MAC_X64_SIG_FILE" || echo "")
+          MAC_ARM_SIG=$([ -f "$MAC_ARM_SIG_FILE" ] && cat "$MAC_ARM_SIG_FILE" || echo "")
+
+          WIN_FILENAME=$([ -n "$WIN_ZIP" ] && basename "$WIN_ZIP" || echo "")
+          MAC_X64_FILENAME=$([ -n "$MAC_X64_FILE" ] && basename "$MAC_X64_FILE" || echo "")
+          MAC_ARM_FILENAME=$([ -n "$MAC_ARM_FILE" ] && basename "$MAC_ARM_FILE" || echo "")
+
+          python3 -c "
+          import json, sys
+          data = {
+            'version': '$VERSION',
+            'pub_date': '$(date -u +%Y-%m-%dT%H:%M:%SZ)',
+            'platforms': {
+              'windows-x86_64': {
+                'url': '$BASE_URL/$WIN_FILENAME',
+                'signature': '$WIN_SIG'
+              },
+              'darwin-x86_64': {
+                'url': '$BASE_URL/$MAC_X64_FILENAME',
+                'signature': '$MAC_X64_SIG'
+              },
+              'darwin-aarch64': {
+                'url': '$BASE_URL/$MAC_ARM_FILENAME',
+                'signature': '$MAC_ARM_SIG'
+              }
+            }
+          }
+          print(json.dumps(data, indent=2))
+          " > latest.json
+
+      - name: Commit and push latest.json to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add latest.json
+          git diff --staged --quiet || git commit -m "update: latest.json for $GITHUB_REF_NAME [skip ci]"
+          git push

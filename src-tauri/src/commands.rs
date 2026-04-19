@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 pub struct AppStateMutex(pub Mutex<AppState>);
 pub struct AudioEngineMutex(pub Mutex<AudioEngine>);
+pub struct PendingUpdate(pub Mutex<Option<tauri_plugin_updater::Update<tauri::Wry>>>);
 
 // SAFETY: AudioEngine contains rodio's OutputStream which holds a *mut () via CoreAudio's
 // NotSendSyncAcrossAllPlatforms.  We wrap it in a Mutex so concurrent access is impossible,
@@ -333,6 +334,32 @@ pub fn set_autopause_on_lock(
     app_state.autopause_on_lock = enabled;
     save_state(&app_state)?;
     Ok(app_state.clone())
+}
+
+#[tauri::command]
+pub fn set_auto_update_enabled(
+    enabled: bool,
+    state: State<'_, AppStateMutex>,
+) -> Result<AppState, AppError> {
+    let mut app_state = state
+        .0
+        .lock()
+        .map_err(|_| AppError::Audio("State lock poisoned".into()))?;
+    app_state.auto_update_enabled = enabled;
+    save_state(&app_state)?;
+    Ok(app_state.clone())
+}
+
+#[tauri::command]
+pub async fn install_update(pending: State<'_, PendingUpdate>) -> Result<(), String> {
+    let update = pending.0.lock().unwrap().take();
+    if let Some(update) = update {
+        update
+            .download_and_install(|_, _| {}, || {})
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

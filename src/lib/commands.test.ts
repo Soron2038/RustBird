@@ -13,6 +13,8 @@ import {
   setCrossfadeDuration,
   setDialogOpen,
   setDialogClosed,
+  setAutoUpdateEnabled,
+  installUpdate,
 } from './commands';
 
 const mockInvoke = vi.mocked(invoke);
@@ -98,6 +100,18 @@ describe('typed helpers', () => {
     mockInvoke.mockResolvedValueOnce(undefined);
     await setDialogClosed();
     expect(mockInvoke).toHaveBeenCalledWith('set_dialog_closed', undefined);
+  });
+
+  it('setAutoUpdateEnabled passes correct args', async () => {
+    mockInvoke.mockResolvedValueOnce({});
+    await setAutoUpdateEnabled(true);
+    expect(mockInvoke).toHaveBeenCalledWith('set_auto_update_enabled', { enabled: true });
+  });
+
+  it('installUpdate calls correct command', async () => {
+    mockInvoke.mockResolvedValueOnce(undefined);
+    await installUpdate();
+    expect(mockInvoke).toHaveBeenCalledWith('install_update', undefined);
   });
 
   it('getState calls correct command', async () => {

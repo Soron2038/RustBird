@@ -21,6 +21,7 @@ pub struct AppState {
     pub crossfade_duration: f32,
     pub autostart_enabled: bool,
     pub autopause_on_lock: bool,
+    pub auto_update_enabled: bool,
     #[serde(skip)]
     pub dialog_open: bool,
     #[serde(skip)]
@@ -36,6 +37,8 @@ pub struct PersistedState {
     pub autostart_enabled: bool,
     #[serde(default)]
     pub autopause_on_lock: bool,
+    #[serde(default)]
+    pub auto_update_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,6 +57,7 @@ impl Default for AppState {
             crossfade_duration: 2.0,
             autostart_enabled: true,
             autopause_on_lock: false,
+            auto_update_enabled: false,
             dialog_open: false,
             lock_triggered_pause: false,
         }
@@ -77,6 +81,7 @@ impl AppState {
             crossfade_duration: self.crossfade_duration,
             autostart_enabled: self.autostart_enabled,
             autopause_on_lock: self.autopause_on_lock,
+            auto_update_enabled: self.auto_update_enabled,
         }
     }
 
@@ -86,6 +91,7 @@ impl AppState {
         self.crossfade_duration = persisted.crossfade_duration;
         self.autostart_enabled = persisted.autostart_enabled;
         self.autopause_on_lock = persisted.autopause_on_lock;
+        self.auto_update_enabled = persisted.auto_update_enabled;
 
         for ps in &persisted.sound_states {
             if let Some(sound) = self.sounds.iter_mut().find(|s| s.id == ps.id) {
@@ -366,6 +372,36 @@ mod tests {
         let mut new_state = AppState::default();
         new_state.apply_persisted(&restored);
         assert!(new_state.autopause_on_lock);
+    }
+
+    #[test]
+    fn auto_update_enabled_defaults_false_and_persists() {
+        // Default must be false
+        let state = AppState::default();
+        assert!(!state.auto_update_enabled);
+
+        // Enabled=true round-trips through JSON
+        let state_on = AppState {
+            auto_update_enabled: true,
+            ..AppState::default()
+        };
+        let persisted = state_on.to_persisted();
+        assert!(persisted.auto_update_enabled);
+
+        let json = serde_json::to_string(&persisted).expect("serialize");
+        let restored: PersistedState = serde_json::from_str(&json).expect("deserialize");
+
+        let mut new_state = AppState::default();
+        new_state.apply_persisted(&restored);
+        assert!(new_state.auto_update_enabled);
+    }
+
+    #[test]
+    fn auto_update_enabled_defaults_false_on_missing_field() {
+        // Old config JSON without the field should deserialize with default=false
+        let json = r#"{"sound_states":[],"master_volume":0.8,"is_paused":false,"crossfade_duration":2.0,"autostart_enabled":true,"autopause_on_lock":false}"#;
+        let restored: PersistedState = serde_json::from_str(json).expect("deserialize");
+        assert!(!restored.auto_update_enabled);
     }
 
     #[test]
