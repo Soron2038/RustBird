@@ -2,5 +2,7 @@
   "claudeCode.useTerminal": false,
   "github-actions.workflows.pinned.workflows": [
     ".github/workflows/build-windows.yml"
-  ]
+  ],
+  "claudeCode.initialPermissionMode": "plan",
+  "claudeCode.allowDangerouslySkipPermissions": true
 }
