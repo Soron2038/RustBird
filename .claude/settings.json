@@ -17,7 +17,9 @@
       "WebFetch(domain:v2.tauri.app)",
       "Bash(gh run *)",
       "Bash(/opt/homebrew/bin/gh run *)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.6.0/crates/tauri-bundler/src/bundle/updater_bundle.rs)"
     ]
   },
   "hooks": {
