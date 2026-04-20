@@ -42,24 +42,13 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build
 
-      - name: List Windows bundle output
-        shell: pwsh
-        run: Get-ChildItem -Recurse src-tauri/target/release/bundle | Select-Object FullName
-
-      - name: Upload MSI installer
+      - name: Upload MSI installer and signature
         uses: actions/upload-artifact@v4
         with:
           name: windows-msi
-          path: src-tauri/target/release/bundle/msi/*.msi
-          if-no-files-found: error
-
-      - name: Upload Windows updater artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-updater
           path: |
-            src-tauri/target/release/bundle/msi/*.msi.zip*
-            src-tauri/target/release/bundle/nsis/*.nsis.zip*
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/msi/*.msi.sig
           if-no-files-found: error
 
   build-macos-intel:
@@ -200,12 +189,6 @@ jobs:
           name: macos-arm-dmg
           path: artifacts/arm/
 
-      - name: Download Windows updater artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-updater
-          path: artifacts/windows/
-
       - name: Download macOS Intel updater artifact
         uses: actions/download-artifact@v4
         with:
@@ -238,10 +221,10 @@ jobs:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download Windows updater artifact
+      - name: Download Windows MSI artifact
         uses: actions/download-artifact@v4
         with:
-          name: windows-updater
+          name: windows-msi
           path: artifacts/windows/
 
       - name: Download macOS Intel updater artifact
@@ -262,8 +245,8 @@ jobs:
           TAG="$GITHUB_REF_NAME"
           BASE_URL="https://github.com/Soron2038/RustBird/releases/download/$TAG"
 
-          WIN_ZIP=$(ls artifacts/windows/*.nsis.zip artifacts/windows/*.msi.zip 2>/dev/null | grep -v '\.sig$' | head -1)
-          WIN_SIG_FILE=$(ls artifacts/windows/*.nsis.zip.sig artifacts/windows/*.msi.zip.sig 2>/dev/null | head -1)
+          WIN_ZIP=$(ls artifacts/windows/*.msi 2>/dev/null | head -1)
+          WIN_SIG_FILE=$(ls artifacts/windows/*.msi.sig 2>/dev/null | head -1)
           MAC_X64_FILE=$(ls artifacts/intel/*_x64.app.tar.gz 2>/dev/null | grep -v '\.sig$' | head -1)
           MAC_X64_SIG_FILE=$(ls artifacts/intel/*_x64.app.tar.gz.sig 2>/dev/null | head -1)
           MAC_ARM_FILE=$(ls artifacts/arm/*_aarch64.app.tar.gz 2>/dev/null | grep -v '\.sig$' | head -1)
