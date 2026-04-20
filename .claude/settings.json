@@ -30,7 +30,9 @@
       "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\('latest:', d['crate']['max_version']\\); [print\\(v['num']\\) for v in d['versions'][:6]]\")",
       "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.8.1/crates/tauri-bundler/src/bundle/updater_bundle.rs)",
       "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-cli-v2.9.0/crates/tauri-cli/src/bundle.rs)",
-      "Bash(cargo check *)"
+      "Bash(cargo check *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)"
     ]
   },
   "hooks": {
