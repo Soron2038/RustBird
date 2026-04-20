@@ -19,7 +19,9 @@
       "Bash(/opt/homebrew/bin/gh run *)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.6.0/crates/tauri-bundler/src/bundle/updater_bundle.rs)"
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.6.0/crates/tauri-bundler/src/bundle/updater_bundle.rs)",
+      "Bash(git -C /Users/witt/Developer/RustBird show --stat v1.1.10 --format=%H)",
+      "Bash(git -C /Users/witt/Developer/RustBird show v1.1.10:.github/workflows/release.yml)"
     ]
   },
   "hooks": {
