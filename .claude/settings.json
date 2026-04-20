@@ -3,7 +3,10 @@
     "allow": [
       "Bash(cargo fmt *)",
       "Bash(cargo clippy *)",
-      "Bash(cmd /c '\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\VC\\\\Auxiliary\\\\Build\\\\vcvarsall.bat\" x64 && cargo clippy --manifest-path \"c:/Users/soron/Documents/Develop/RustBird/src-tauri/Cargo.toml\" -- -D warnings 2>&1')"
+      "Bash(cmd /c '\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\VC\\\\Auxiliary\\\\Build\\\\vcvarsall.bat\" x64 && cargo clippy --manifest-path \"c:/Users/soron/Documents/Develop/RustBird/src-tauri/Cargo.toml\" -- -D warnings 2>&1')",
+      "Bash(git -C /Users/witt/Developer/RustBird diff .github/workflows/release.yml)",
+      "Bash(git commit -m ' *)",
+      "Bash(git -C /Users/witt/Developer/RustBird status)"
     ]
   },
   "hooks": {
