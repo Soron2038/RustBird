@@ -8,6 +8,17 @@ See [AGENTS.md](AGENTS.md) for architecture, commands, file structure, and conve
 
 Auto-commit to `main` is the standard workflow for this project. No feature branches needed.
 
+## Releases
+
+Always bump the version via `npm version` — never edit `package.json`, `Cargo.toml`, `tauri.conf.json`, or `Cargo.lock` by hand. The `version` lifecycle hook syncs all four files, commits them, and tags.
+
+```bash
+npm version patch        # 1.1.12 → 1.1.13
+git push && git push --tags
+```
+
+Same pattern for `minor`, `major`, or a literal `1.2.0`.
+
 ## Testing
 
 New features and bugfixes must include tests:

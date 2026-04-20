@@ -15,7 +15,8 @@
     "format": "prettier --write src",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "version": "node scripts/sync-version.mjs && git add src-tauri/Cargo.toml src-tauri/tauri.conf.json src-tauri/Cargo.lock"
   },
   "lint-staged": {
     "*.{ts,svelte}": [
