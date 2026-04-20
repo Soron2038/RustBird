@@ -21,7 +21,15 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.6.0/crates/tauri-bundler/src/bundle/updater_bundle.rs)",
       "Bash(git -C /Users/witt/Developer/RustBird show --stat v1.1.10 --format=%H)",
-      "Bash(git -C /Users/witt/Developer/RustBird show v1.1.10:.github/workflows/release.yml)"
+      "Bash(git -C /Users/witt/Developer/RustBird show v1.1.10:.github/workflows/release.yml)",
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.6.0/crates/tauri-bundler/src/bundle/windows/sign.rs)",
+      "Bash(curl -sL \"https://api.github.com/repos/tauri-apps/tauri/tags?per_page=20\")",
+      "Bash(curl -sL \"https://api.github.com/repos/tauri-apps/tauri/tags?per_page=50\")",
+      "Bash(python3 -c \"import sys,json; data=json.loads\\(sys.stdin.read\\(\\)\\); [print\\(t['name']\\) for t in data if 'bundler' in t['name']][:5]\")",
+      "Bash(curl -sL \"https://crates.io/api/v1/crates/tauri-bundler\")",
+      "Bash(python3 -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\('latest:', d['crate']['max_version']\\); [print\\(v['num']\\) for v in d['versions'][:6]]\")",
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.8.1/crates/tauri-bundler/src/bundle/updater_bundle.rs)",
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-cli-v2.9.0/crates/tauri-cli/src/bundle.rs)"
     ]
   },
   "hooks": {
