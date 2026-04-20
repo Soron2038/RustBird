@@ -53,8 +53,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-updater
-          path: src-tauri/target/release/bundle/msi/*.msi.zip*
-          if-no-files-found: warn
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi.zip*
+            src-tauri/target/release/bundle/nsis/*.nsis.zip*
+          if-no-files-found: error
 
   build-macos-intel:
     runs-on: macos-latest
@@ -110,7 +112,7 @@ jobs:
         with:
           name: macos-intel-updater
           path: src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*_x64.app.tar.gz*
-          if-no-files-found: warn
+          if-no-files-found: error
 
   build-macos-arm:
     runs-on: macos-latest
@@ -166,7 +168,7 @@ jobs:
         with:
           name: macos-arm-updater
           path: src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*_aarch64.app.tar.gz*
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     needs: [build-windows, build-macos-intel, build-macos-arm]
@@ -256,8 +258,8 @@ jobs:
           TAG="$GITHUB_REF_NAME"
           BASE_URL="https://github.com/Soron2038/RustBird/releases/download/$TAG"
 
-          WIN_ZIP=$(ls artifacts/windows/*.msi.zip 2>/dev/null | grep -v '\.sig$' | head -1)
-          WIN_SIG_FILE=$(ls artifacts/windows/*.msi.zip.sig 2>/dev/null | head -1)
+          WIN_ZIP=$(ls artifacts/windows/*.nsis.zip artifacts/windows/*.msi.zip 2>/dev/null | grep -v '\.sig$' | head -1)
+          WIN_SIG_FILE=$(ls artifacts/windows/*.nsis.zip.sig artifacts/windows/*.msi.zip.sig 2>/dev/null | head -1)
           MAC_X64_FILE=$(ls artifacts/intel/*_x64.app.tar.gz 2>/dev/null | grep -v '\.sig$' | head -1)
           MAC_X64_SIG_FILE=$(ls artifacts/intel/*_x64.app.tar.gz.sig 2>/dev/null | head -1)
           MAC_ARM_FILE=$(ls artifacts/arm/*_aarch64.app.tar.gz 2>/dev/null | grep -v '\.sig$' | head -1)
