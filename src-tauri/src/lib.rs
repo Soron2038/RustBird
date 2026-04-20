@@ -10,7 +10,7 @@ use audio::AudioEngine;
 use commands::{AppStateMutex, AudioEngineMutex, PendingUpdate};
 use state::{discover_bundled_sounds, discover_user_sounds, load_persisted_state, AppState};
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

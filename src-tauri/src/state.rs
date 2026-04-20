@@ -231,6 +231,7 @@ mod tests {
             crossfade_duration: 3.5,
             autostart_enabled: false,
             autopause_on_lock: true,
+            auto_update_enabled: false,
             dialog_open: false,
             lock_triggered_pause: false,
         };
@@ -292,6 +293,7 @@ mod tests {
             crossfade_duration: 1.0,
             autostart_enabled: false,
             autopause_on_lock: false,
+            auto_update_enabled: false,
         };
 
         // Must not panic

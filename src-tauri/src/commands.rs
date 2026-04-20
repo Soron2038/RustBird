@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 pub struct AppStateMutex(pub Mutex<AppState>);
 pub struct AudioEngineMutex(pub Mutex<AudioEngine>);
-pub struct PendingUpdate(pub Mutex<Option<tauri_plugin_updater::Update<tauri::Wry>>>);
+pub struct PendingUpdate(pub Mutex<Option<tauri_plugin_updater::Update>>);
 
 // SAFETY: AudioEngine contains rodio's OutputStream which holds a *mut () via CoreAudio's
 // NotSendSyncAcrossAllPlatforms.  We wrap it in a Mutex so concurrent access is impossible,
