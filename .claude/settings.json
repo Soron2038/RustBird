@@ -40,8 +40,22 @@
       "Bash(npm ping *)",
       "Bash(codesign -dvv /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)",
       "Bash(xattr -l /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)",
-      "Bash(open /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)"
-    ]
+      "Bash(open /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL OK'\\)\")",
+      "WebFetch(domain:schema.tauri.app)",
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.8.1/crates/tauri-bundler/src/settings.rs)",
+      "Bash(curl -sL https://raw.githubusercontent.com/tauri-apps/tauri/tauri-bundler-v2.8.1/crates/tauri-bundler/src/bundle/macos/dmg/mod.rs)",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "Bash(python3 -m http.server 8765)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/witt/Developer/RustBird/src-tauri/dmg-background.png)",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Bash(kill bhfzu3erd *)",
+      "Bash(pkill -f \"http.server 8765\")",
+      "Bash(git -C /Users/witt/Developer/RustBird diff README.md src-tauri/tauri.conf.json)"
+    ],
+    "additionalDirectories": ["/tmp", "/private/tmp"]
   },
   "hooks": {
     "Stop": [
