@@ -19,16 +19,20 @@ Download the latest release for your platform from the [Releases](../../releases
 
 ### macOS
 
-1. Download `RustBird_1.0.0_aarch64.dmg` (Apple Silicon) or `RustBird_1.0.0_x64.dmg` (Intel)
-2. Open the DMG and drag RustBird to your Applications folder
-3. **First launch:** macOS will block the app because it is not notarized by Apple. To open it:
-   - Right-click the app icon → **Open** → confirm in the dialog, **or**
-   - Run in Terminal: `xattr -rd com.apple.quarantine /Applications/RustBird.app`
+1. Download `RustBird_<version>_aarch64.dmg` (Apple Silicon) or `RustBird_<version>_x64.dmg` (Intel) from the [Releases](../../releases) page.
+2. Open the DMG and drag **RustBird** onto the **Applications** folder — the window background shows the same hint.
+3. **Before first launch**, run this once in Terminal, otherwise macOS will refuse with _"RustBird.app is damaged"_:
+
+   ```bash
+   xattr -cr /Applications/RustBird.app
+   ```
+
+   RustBird is not yet Apple-notarized, so macOS quarantines every download. This command removes the quarantine flag; afterwards the app launches normally.
 
 ### Windows
 
-1. Download `RustBird_1.0.0_x64-setup.exe`
-2. Run the installer and follow the prompts
+1. Download `RustBird_<version>_x64_en-US.msi` from the [Releases](../../releases) page.
+2. Run the installer and follow the prompts.
 
 ## Usage
 
