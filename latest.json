@@ -1,18 +1,18 @@
 {
-  "version": "1.1.12",
-  "pub_date": "2026-04-20T14:14:24Z",
+  "version": "1.1.13",
+  "pub_date": "2026-04-21T08:08:32Z",
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/Soron2038/RustBird/releases/download/v1.1.12/RustBird_1.1.12_x64_en-US.msi",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRTXFwb3JoWFB2VFZBbTVENUpLZHljV3ZMdWY5WTZBbkZUd2E4VWJKWU5CeGdUZ3NqVzNqNktrQ3p3WEhndUk4VnVrY0VFcmQ1NHEwNXJTeDlJK09JQlJKeGJLSmxBTFFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2Njk0MjgxCWZpbGU6UnVzdEJpcmRfMS4xLjEyX3g2NF9lbi1VUy5tc2kKZTI2VkNkUVM3VVFHSE02NkNoa2FKcE4wbUI0azBUWEFOdWxLL2dCVlhqRUR1ZDZjVHJibkpBZDVaTmo2MWZPVWpuVHZZeU9RRDRjUjd4YUhTSEFNQUE9PQo="
+      "url": "https://github.com/Soron2038/RustBird/releases/download/v1.1.13/RustBird_1.1.13_x64_en-US.msi",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRTXFwb3JoWFB2VFlSS2NaaHFTbVNrUjFFeDZuREdkejNtYjZPVERucGsyNEpxdFM2S0Yxa3ZwZ2lqNmdOUDFMSERDaUhGdi9tY01WYVAvYVBEV1Z3elhSZndaM1A3MWc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NzU4NzU1CWZpbGU6UnVzdEJpcmRfMS4xLjEzX3g2NF9lbi1VUy5tc2kKekY4L011RUNUUDRjNklGMjY2WlNKTzJ3N3ZwMkt1TkJidkZhRWRBNVdOa0xyR0xUTzNDaDgxM0wwOHE5RWlzNXZDd2RVSldOQnNocWJteXlLQjdnQ0E9PQo="
     },
     "darwin-x86_64": {
-      "url": "https://github.com/Soron2038/RustBird/releases/download/v1.1.12/RustBird_x64.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRTXFwb3JoWFB2VFl2Y3N5ODU4c1hzUW1wcWR6U0JzSnBwMk52SG1pQzN2eTEvQVNxaHVwQmltTGRWdFZ3RE13MUxDeU53VW0xYlQyem9HT1oycURLeExTejkwTFJEMlE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NjkzNjU4CWZpbGU6UnVzdEJpcmQuYXBwLnRhci5negprazBPbHZ6MGUxSExxR0JOVTBVMmV6SlFZTmcwUHMzUGF0WE9JSFRiRGZQVklYSDBBMGhhQUszZWdiTXVHcE0zdmxvalFVMUxlU2NYV25ZWGxvYkZDdz09Cg=="
+      "url": "https://github.com/Soron2038/RustBird/releases/download/v1.1.13/RustBird_x64.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRTXFwb3JoWFB2VFcyR1l4Y2pKclVqbjFoMS84WGp6aERSUkJaUVhIbnBGREZlYjgxa2Vxb0YwaXpERWdja0JHVHh5MnVIM2QyR1h5VTViSWVzVTlBQ2daKy9jc1Mxc2c4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NzU4MDMxCWZpbGU6UnVzdEJpcmQuYXBwLnRhci5negpyQ1pMNSsxQVl4WERraWQ1YWc1RmQ5YUUxa0dVLy9oZXp4OXNoODBhbWNCR1VRWW9uQjRLMHN0NUFSV2pzNDdnM2ZJMTMrT0lMdHNKaXFqaGdiUk1CQT09Cg=="
     },
     "darwin-aarch64": {
-      "url": "https://github.com/Soron2038/RustBird/releases/download/v1.1.12/RustBird_aarch64.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRTXFwb3JoWFB2VGZkdjV3TVdwbkgwTldyaU84WlZsQ3g3UzZTeWZ3eFBCeHNpZ1dhNlBsQVVDaW00THNWWEtSQlY3eFdtdWpvdXhkUzdZMEhrZjZvN0FTUGtBT2JiVGdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NjkzNjU2CWZpbGU6UnVzdEJpcmQuYXBwLnRhci5negp2SHkyMnFZNzUxemtwdUh0dkdMRUdXcHFieEtFdlp5VUY5S3BESTF5VjJxS0JPMUxxa08yLzRsSmZjc3FtWU16Smk4ZVlpK29ObU1CZC9UN09MclZEZz09Cg=="
+      "url": "https://github.com/Soron2038/RustBird/releases/download/v1.1.13/RustBird_aarch64.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRTXFwb3JoWFB2VFZ4Sm55anRhcFBQVkhiSGtGLzk2enBmelBEQnF2ZCtVRFRvMHBJMWk3ZFVvYmxEQUtqdUJqMW55ODY4RjJtMmM1bHFPYkZrS1hNM3pnK1B4SWttWFFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NzU4MDY3CWZpbGU6UnVzdEJpcmQuYXBwLnRhci5negpsU2x2eDBLV3MwS2Nhc2FLTE9UTnpmUWxEdWF4aSsrakYrSlQ2WXlmdjVOL3pLaGtVTktWaFArWitXNFdTQndUdE5ZdzZpbWlzOUIvOTZOcSt6SE1EUT09Cg=="
     }
   }
 }
