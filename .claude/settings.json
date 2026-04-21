@@ -34,7 +34,13 @@
       "Bash(git pull *)",
       "Bash(git stash *)",
       "Bash(node /Users/witt/Developer/RustBird/scripts/sync-version.mjs)",
-      "Bash(git -C /Users/witt/Developer/RustBird diff --stat src-tauri/Cargo.toml src-tauri/tauri.conf.json src-tauri/Cargo.lock)"
+      "Bash(git -C /Users/witt/Developer/RustBird diff --stat src-tauri/Cargo.toml src-tauri/tauri.conf.json src-tauri/Cargo.lock)",
+      "Bash(npm run *)",
+      "Bash(npm ci *)",
+      "Bash(npm ping *)",
+      "Bash(codesign -dvv /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)",
+      "Bash(xattr -l /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)",
+      "Bash(open /Users/witt/Developer/RustBird/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/RustBird.app)"
     ]
   },
   "hooks": {
