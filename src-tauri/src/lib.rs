@@ -152,8 +152,7 @@ pub fn run() {
                 tray.set_show_menu_on_left_click(false)?;
             }
 
-            let app_handle = app.handle().clone();
-            app.on_tray_icon_event(move |tray, event| {
+            app.on_tray_icon_event(move |app, event| {
                 use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 
                 match event {
@@ -162,18 +161,21 @@ pub fn run() {
                         button_state: MouseButtonState::Up,
                         rect,
                         ..
-                    } => toggle_popover(&app_handle, rect),
+                    } => toggle_popover(app, rect),
                     TrayIconEvent::Click {
+                        id,
                         button: MouseButton::Right,
                         button_state: MouseButtonState::Down,
                         ..
                     } => {
                         #[cfg(target_os = "macos")]
-                        show_tray_menu(tray, &tray_menu);
+                        if let Some(tray) = app.tray_by_id(&id) {
+                            show_tray_menu(&tray, &tray_menu);
+                        }
                         // Elsewhere the menu is permanently attached and tray-icon
                         // pops it on its own.
                         #[cfg(not(target_os = "macos"))]
-                        let _ = (tray, &tray_menu);
+                        let _ = (id, &tray_menu);
                     }
                     _ => {}
                 }
