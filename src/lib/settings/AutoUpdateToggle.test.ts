@@ -17,7 +17,7 @@ describe('AutoUpdateToggle', () => {
 
   it('shows hint text', () => {
     render(AutoUpdateToggle, { props: { enabled: false } });
-    expect(screen.getByText(/Wird beim nächsten Start geprüft/)).toBeTruthy();
+    expect(screen.getByText(/Prüft beim Start und alle 6 Stunden/)).toBeTruthy();
   });
 
   it('toggle off → on calls set_auto_update_enabled with true', async () => {

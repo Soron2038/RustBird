@@ -37,8 +37,12 @@ pub struct PersistedState {
     pub autostart_enabled: bool,
     #[serde(default)]
     pub autopause_on_lock: bool,
+    /// `None` = never decided → updates on. Deliberately a new key: configs
+    /// written before 1.1.15 carry `auto_update_enabled: false` for everyone
+    /// (it was the default and the updater never worked), so honouring it
+    /// would leave every existing install opted out.
     #[serde(default)]
-    pub auto_update_enabled: bool,
+    pub auto_update: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,7 +61,7 @@ impl Default for AppState {
             crossfade_duration: 2.0,
             autostart_enabled: true,
             autopause_on_lock: false,
-            auto_update_enabled: false,
+            auto_update_enabled: true,
             dialog_open: false,
             lock_triggered_pause: false,
         }
@@ -81,7 +85,7 @@ impl AppState {
             crossfade_duration: self.crossfade_duration,
             autostart_enabled: self.autostart_enabled,
             autopause_on_lock: self.autopause_on_lock,
-            auto_update_enabled: self.auto_update_enabled,
+            auto_update: Some(self.auto_update_enabled),
         }
     }
 
@@ -91,7 +95,7 @@ impl AppState {
         self.crossfade_duration = persisted.crossfade_duration;
         self.autostart_enabled = persisted.autostart_enabled;
         self.autopause_on_lock = persisted.autopause_on_lock;
-        self.auto_update_enabled = persisted.auto_update_enabled;
+        self.auto_update_enabled = persisted.auto_update.unwrap_or(true);
 
         for ps in &persisted.sound_states {
             if let Some(sound) = self.sounds.iter_mut().find(|s| s.id == ps.id) {
@@ -293,7 +297,7 @@ mod tests {
             crossfade_duration: 1.0,
             autostart_enabled: false,
             autopause_on_lock: false,
-            auto_update_enabled: false,
+            auto_update: Some(false),
         };
 
         // Must not panic
@@ -377,33 +381,50 @@ mod tests {
     }
 
     #[test]
-    fn auto_update_enabled_defaults_false_and_persists() {
-        // Default must be false
+    fn auto_update_defaults_on_and_opt_out_persists() {
+        // Default must be on
         let state = AppState::default();
-        assert!(!state.auto_update_enabled);
+        assert!(state.auto_update_enabled);
 
-        // Enabled=true round-trips through JSON
-        let state_on = AppState {
-            auto_update_enabled: true,
+        // Opt-out round-trips through JSON
+        let state_off = AppState {
+            auto_update_enabled: false,
             ..AppState::default()
         };
-        let persisted = state_on.to_persisted();
-        assert!(persisted.auto_update_enabled);
+        let persisted = state_off.to_persisted();
+        assert_eq!(persisted.auto_update, Some(false));
 
         let json = serde_json::to_string(&persisted).expect("serialize");
         let restored: PersistedState = serde_json::from_str(&json).expect("deserialize");
 
         let mut new_state = AppState::default();
         new_state.apply_persisted(&restored);
-        assert!(new_state.auto_update_enabled);
+        assert!(!new_state.auto_update_enabled);
     }
 
     #[test]
-    fn auto_update_enabled_defaults_false_on_missing_field() {
-        // Old config JSON without the field should deserialize with default=false
+    fn auto_update_on_when_field_missing() {
+        // Config JSON without the field must leave updates on
         let json = r#"{"sound_states":[],"master_volume":0.8,"is_paused":false,"crossfade_duration":2.0,"autostart_enabled":true,"autopause_on_lock":false}"#;
         let restored: PersistedState = serde_json::from_str(json).expect("deserialize");
-        assert!(!restored.auto_update_enabled);
+        assert_eq!(restored.auto_update, None);
+
+        let mut state = AppState::default();
+        state.apply_persisted(&restored);
+        assert!(state.auto_update_enabled);
+    }
+
+    #[test]
+    fn legacy_auto_update_enabled_key_is_ignored() {
+        // Configs written before 1.1.15 carry `auto_update_enabled: false` for
+        // everyone; that must not keep existing installs opted out.
+        let json = r#"{"sound_states":[],"master_volume":0.8,"is_paused":false,"crossfade_duration":2.0,"autostart_enabled":true,"autopause_on_lock":false,"auto_update_enabled":false}"#;
+        let restored: PersistedState = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(restored.auto_update, None);
+
+        let mut state = AppState::default();
+        state.apply_persisted(&restored);
+        assert!(state.auto_update_enabled);
     }
 
     #[test]

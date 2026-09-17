@@ -12,10 +12,10 @@
     pauseAll,
     resumeAll,
     removeSound,
-    installUpdate,
     setDialogOpen,
     setDialogClosed,
   } from '$lib/commands';
+  import UpdateBanner from '$lib/UpdateBanner.svelte';
   import Header from '$lib/Header.svelte';
   import Mixer from '$lib/Mixer.svelte';
   import SoundList from '$lib/SoundList.svelte';
@@ -28,7 +28,7 @@
   onMount(() => {
     getState().then((s) => (appState = s));
     const unlistenPlayback = listen('sound-playback-failed', () => refreshState());
-    const unlistenUpdate = listen<string>('update-available', (e) => {
+    const unlistenUpdate = listen<string>('update-ready', (e) => {
       updateVersion = e.payload;
       setDialogOpen();
     });
@@ -37,12 +37,6 @@
       unlistenUpdate.then((fn) => fn());
     };
   });
-
-  async function doInstallUpdate() {
-    await installUpdate();
-    updateVersion = null;
-    setDialogClosed();
-  }
 
   function dismissUpdate() {
     updateVersion = null;
@@ -73,13 +67,7 @@
   />
 
   {#if updateVersion}
-    <div class="update-overlay" role="dialog" aria-modal="true">
-      <p>RustBird {updateVersion} ist verfügbar</p>
-      <div class="update-buttons">
-        <button class="btn-install" onclick={doInstallUpdate}>Installieren</button>
-        <button class="btn-later" onclick={dismissUpdate}>Später</button>
-      </div>
-    </div>
+    <UpdateBanner version={updateVersion} onDismiss={dismissUpdate} />
   {/if}
 
   {#if showSettings}
@@ -114,45 +102,3 @@
     />
   {/if}
 {/if}
-
-<style>
-  .update-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    background: var(--bg);
-    z-index: 100;
-    padding: 24px;
-    text-align: center;
-  }
-  .update-overlay p {
-    font-size: 13px;
-    font-weight: 500;
-    margin: 0;
-  }
-  .update-buttons {
-    display: flex;
-    gap: 8px;
-  }
-  .btn-install {
-    font-size: 12px;
-    padding: 5px 14px;
-    border-radius: 6px;
-    background: var(--accent, #4a9eff);
-    color: #fff;
-    border: none;
-    cursor: pointer;
-  }
-  .btn-later {
-    font-size: 12px;
-    padding: 5px 14px;
-    border-radius: 6px;
-    background: transparent;
-    border: 0.5px solid var(--separator);
-    cursor: pointer;
-  }
-</style>

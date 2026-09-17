@@ -24,7 +24,7 @@
 <div class="setting-row">
   <div class="setting-label">
     <span>Automatisch nach Updates suchen</span>
-    <span class="hint">Wird beim nächsten Start geprüft</span>
+    <span class="hint">Prüft beim Start und alle 6 Stunden, lädt im Hintergrund</span>
   </div>
   <div
     class="toggle-pill"

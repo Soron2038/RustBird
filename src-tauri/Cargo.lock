@@ -3741,6 +3741,7 @@ dependencies = [
  "tauri-plugin-positioner",
  "tauri-plugin-updater",
  "thiserror 2.0.18",
+ "tokio",
  "uuid",
  "windows 0.58.0",
 ]

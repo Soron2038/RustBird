@@ -5,12 +5,13 @@ mod error;
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 mod lock_listener;
 mod state;
+mod updater;
 
 use audio::AudioEngine;
 use commands::{AppStateMutex, AudioEngineMutex, PendingUpdate};
 use state::{discover_bundled_sounds, discover_user_sounds, load_persisted_state, AppState};
 use std::sync::Mutex;
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 use tauri_plugin_autostart::ManagerExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -102,34 +103,13 @@ pub fn run() {
                 let _ = app.autolaunch().enable();
             }
 
-            let auto_update_enabled = app_state.auto_update_enabled;
-
             // Register managed state
             app.manage(AppStateMutex(Mutex::new(app_state)));
             app.manage(AudioEngineMutex(Mutex::new(audio_engine)));
             app.manage(PendingUpdate(Mutex::new(None)));
 
-            // Spawn async update check if enabled
-            if auto_update_enabled {
-                let app_handle = app.handle().clone();
-                tauri::async_runtime::spawn(async move {
-                    use tauri_plugin_updater::UpdaterExt;
-                    match app_handle.updater() {
-                        Ok(updater) => match updater.check().await {
-                            Ok(Some(update)) => {
-                                let version = update.version.clone();
-                                if let Some(pending) = app_handle.try_state::<PendingUpdate>() {
-                                    *pending.0.lock().unwrap() = Some(update);
-                                }
-                                let _ = app_handle.emit("update-available", version);
-                            }
-                            Ok(None) => {}
-                            Err(e) => log::warn!("Update check failed: {e}"),
-                        },
-                        Err(e) => log::warn!("Updater not available: {e}"),
-                    }
-                });
-            }
+            // Periodic update check (respects the auto-update setting each round)
+            updater::spawn_check_loop(app.handle().clone());
 
             // Start screen-lock listener (macOS + Windows)
             #[cfg(any(target_os = "macos", target_os = "windows"))]

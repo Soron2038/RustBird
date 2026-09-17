@@ -34,6 +34,10 @@ Download the latest release for your platform from the [Releases](../../releases
 1. Download `RustBird_<version>_x64_en-US.msi` from the [Releases](../../releases) page.
 2. Run the installer and follow the prompts.
 
+### Updates
+
+RustBird checks for new releases at launch and every 6 hours, downloads them in the background and then offers a one-click restart into the new version. This can be turned off under Settings → "Automatisch nach Updates suchen". Installs older than 1.1.15 need to be updated by hand once.
+
 ## Usage
 
 Click the tray icon to open the mixer. Right-click the tray icon for a Quit option.
